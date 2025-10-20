@@ -1,0 +1,131 @@
+<div class="gtfs-widget">
+  <label for="providerSelect">Provider:</label>
+  <select id="providerSelect" ng-model="ctx.selectedProvider">
+    <option value="Auckland Transport">Auckland Transport</option>
+    <option value="Metlink">Metlink</option>
+  </select>
+
+  <!-- New two-pane input row -->
+  <div class="input-split">
+    <!-- Left: GTFS ZIP -->
+    <div class="input-panel">
+      <div class="panel-title">GTFS (.zip)</div>
+
+      <div class="file-drop-zone gtfs">
+        <p><strong>Click or Drag & Drop your GTFS ZIP here</strong></p>
+      </div>
+
+      <div id="gtfsStatus" class="zip-status" hidden aria-live="polite"></div>
+    </div>
+
+    <!-- Right: School Bus GeoJSON -->
+    <div class="input-panel">
+      <div class="panel-title">School Bus (GeoJSON)</div>
+
+      <div class="file-drop-zone school">
+        <p><strong>Click or Drag & Drop a GeoJSON here</strong></p>
+      </div>
+
+      <div id="schoolStatus" class="zip-status" hidden aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div
+    id="zipStatus"
+    class="zip-status info"
+    hidden
+    aria-live="polite"
+    role="status"
+  ></div>
+
+  <!-- Keep these hidden inputs anywhere in the widget -->
+  <input type="file" id="gtfsFileInput" style="display: none" accept=".zip" />
+  <input
+    type="file"
+    id="schoolFileInput"
+    style="display: none"
+    accept=".geojson,.json"
+  />
+
+  <hr class="section-sep" />
+
+  <div class="roster-controls">
+    <label>Roster window:</label>
+    <input
+      type="time"
+      id="rosterStart"
+      value="08:00"
+      title="Roster start time"
+      placeholder="Start time"
+    />
+    <span>–</span>
+    <input
+      type="time"
+      id="rosterEnd"
+      value="20:00"
+      title="Roster end time"
+      placeholder="End time"
+    />
+  </div>
+
+  <!-- Trip filter -->
+  <div class="filter-controls" id="tripFilter" aria-label="Trip filter">
+    <label>Trip filter:</label>
+    <select id="routeFilterSelect" disabled title="Select a route ID">
+      <option value="">— Choose route_id (e.g., 70-205) —</option>
+    </select>
+    <div id="routeFilterChips" class="chip-list" aria-live="polite"></div>
+  </div>
+
+  <!-- Trip planner -->
+  <div class="planner" id="planner">
+    <div class="planner-header">
+      <h3>Trips</h3>
+      <div class="planner-actions">
+        <button id="addTripBtn" class="btn small" type="button">
+          Add Trip
+        </button>
+        <span class="hint">
+          Load a GTFS ZIP, then pick Departure & Destination. Arrival time shows
+          next to Destination.
+        </span>
+      </div>
+    </div>
+
+    <div class="trip-columns" id="tripColumns">
+      <!-- Columns are injected here -->
+    </div>
+  </div>
+
+  <hr class="section-sep" />
+
+  <div class="controls">
+    <button id="generateBtn" disabled>Generate</button>
+  </div>
+
+  <div class="output-split">
+    <div class="panel">
+      <div class="panel-title">
+        <span>busRouteData</span>
+        <button id="downloadBusRouteBtn" class="download-btn" disabled>
+          Download
+        </button>
+      </div>
+      <pre id="busRouteJson"></pre>
+    </div>
+    <div class="panel">
+      <div class="panel-title">
+        <span>scheduleData</span>
+        <button id="downloadScheduleBtn" class="download-btn" disabled>
+          Download
+        </button>
+      </div>
+      <pre id="scheduleJson"></pre>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
+    <div class="spinner" aria-label="Loading"></div>
+    <div class="loading-text">Loading ZIP…</div>
+  </div>
+</div>

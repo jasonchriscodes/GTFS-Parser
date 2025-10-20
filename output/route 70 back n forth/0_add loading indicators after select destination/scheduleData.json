@@ -1,0 +1,783 @@
+[
+  {
+    "routeNo": "70",
+    "startTime": "05:00",
+    "endTime": "05:50",
+    "dutyName": "70-205",
+    "busStops": [
+      {
+        "name": "Stop 1",
+        "time": "05:00",
+        "latitude": -36.93226,
+        "longitude": 174.91196,
+        "address": "Stop A Botany Town Centre",
+        "abbreviation": "ABTC",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 2",
+        "time": "05:00",
+        "latitude": -36.9289,
+        "longitude": 174.91157,
+        "address": "Woolworths Botany",
+        "abbreviation": "WB",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 3",
+        "time": "05:01",
+        "latitude": -36.92964,
+        "longitude": 174.9076,
+        "address": "The Hub",
+        "abbreviation": "TH",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 4",
+        "time": "05:02",
+        "latitude": -36.92784,
+        "longitude": 174.90144,
+        "address": "Burswood Drive",
+        "abbreviation": "BD",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 5",
+        "time": "05:03",
+        "latitude": -36.92692,
+        "longitude": 174.89662,
+        "address": "Harris Road",
+        "abbreviation": "HR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 6",
+        "time": "05:04",
+        "latitude": -36.9257,
+        "longitude": 174.89043,
+        "address": "Ti Rakau Drive/Trugood Drive",
+        "abbreviation": "TRD/TD",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 7",
+        "time": "05:05",
+        "latitude": -36.92423,
+        "longitude": 174.88538,
+        "address": "Riverhills Park",
+        "abbreviation": "RP",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 8",
+        "time": "05:05",
+        "latitude": -36.9229,
+        "longitude": 174.88056,
+        "address": "Edgewater Drive",
+        "abbreviation": "ED",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 9",
+        "time": "05:06",
+        "latitude": -36.91968,
+        "longitude": 174.87598,
+        "address": "Marriott Road",
+        "abbreviation": "MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 10",
+        "time": "05:07",
+        "latitude": -36.9178,
+        "longitude": 174.87348,
+        "address": "Ti Rakau Park",
+        "abbreviation": "TRP",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 11",
+        "time": "05:08",
+        "latitude": -36.91341,
+        "longitude": 174.86974,
+        "address": "Palm Avenue/Pakuranga Plaza",
+        "abbreviation": "PA/PP",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 12",
+        "time": "05:09",
+        "latitude": -36.91137,
+        "longitude": 174.86369,
+        "address": "Williams Avenue",
+        "abbreviation": "WA",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 13",
+        "time": "05:13",
+        "latitude": -36.89832,
+        "longitude": 174.84915,
+        "address": "Stop A Panmure Station",
+        "abbreviation": "APS",
+        "time_point": 1
+      },
+      {
+        "name": "Stop 14",
+        "time": "05:14",
+        "latitude": -36.89751,
+        "longitude": 174.84471,
+        "address": "Mountain Road",
+        "abbreviation": "MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 15",
+        "time": "05:15",
+        "latitude": -36.89635,
+        "longitude": 174.84009,
+        "address": "Barrack Road",
+        "abbreviation": "BR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 16",
+        "time": "05:16",
+        "latitude": -36.89649,
+        "longitude": 174.83533,
+        "address": "Ellerslie Panmure Highway/Burt Road",
+        "abbreviation": "EPH/BR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 17",
+        "time": "05:16",
+        "latitude": -36.8969,
+        "longitude": 174.8316,
+        "address": "Ellerslie Panmure Highway/Harris Road",
+        "abbreviation": "EPH/HR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 18",
+        "time": "05:17",
+        "latitude": -36.89726,
+        "longitude": 174.82734,
+        "address": "Harrison Road",
+        "abbreviation": "HR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 19",
+        "time": "05:18",
+        "latitude": -36.89845,
+        "longitude": 174.82243,
+        "address": "Ballarat Street",
+        "abbreviation": "BS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 20",
+        "time": "05:19",
+        "latitude": -36.89938,
+        "longitude": 174.8194,
+        "address": "Ellerslie Park Road",
+        "abbreviation": "EPR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 21",
+        "time": "05:20",
+        "latitude": -36.89937,
+        "longitude": 174.81355,
+        "address": "Ellerslie Domain",
+        "abbreviation": "ED",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 22",
+        "time": "05:22",
+        "latitude": -36.89781,
+        "longitude": 174.80893,
+        "address": "Stop A Ellerslie",
+        "abbreviation": "AE",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 23",
+        "time": "05:23",
+        "latitude": -36.89672,
+        "longitude": 174.8058,
+        "address": "Kalmia Street",
+        "abbreviation": "KS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 24",
+        "time": "05:24",
+        "latitude": -36.89555,
+        "longitude": 174.8025,
+        "address": "St Mary's Catholic School",
+        "abbreviation": "SMCS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 25",
+        "time": "05:25",
+        "latitude": -36.89297,
+        "longitude": 174.79735,
+        "address": "Matai Road",
+        "abbreviation": "MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 26",
+        "time": "05:27",
+        "latitude": -36.88981,
+        "longitude": 174.79309,
+        "address": "Woolworths Greenlane",
+        "abbreviation": "WG",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 27",
+        "time": "05:28",
+        "latitude": -36.88856,
+        "longitude": 174.79138,
+        "address": "Momona Road",
+        "abbreviation": "MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 28",
+        "time": "05:29",
+        "latitude": -36.88509,
+        "longitude": 174.78726,
+        "address": "Karetu Road",
+        "abbreviation": "KR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 29",
+        "time": "05:30",
+        "latitude": -36.88239,
+        "longitude": 174.78466,
+        "address": "Great South Road/Market Road",
+        "abbreviation": "GSR/MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 30",
+        "time": "05:31",
+        "latitude": -36.87986,
+        "longitude": 174.78262,
+        "address": "Dilworth School",
+        "abbreviation": "DS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 31",
+        "time": "05:32",
+        "latitude": -36.87765,
+        "longitude": 174.77996,
+        "address": "Ngaire Avenue",
+        "abbreviation": "NA",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 32",
+        "time": "05:34",
+        "latitude": -36.87442,
+        "longitude": 174.77705,
+        "address": "St Marks Road",
+        "abbreviation": "SMR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 33",
+        "time": "05:34",
+        "latitude": -36.87226,
+        "longitude": 174.77691,
+        "address": "Clovernook Road",
+        "abbreviation": "CR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 34",
+        "time": "05:35",
+        "latitude": -36.87071,
+        "longitude": 174.7772,
+        "address": "Stop A Westfield Newmarket",
+        "abbreviation": "AWN",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 35",
+        "time": "05:36",
+        "latitude": -36.86795,
+        "longitude": 174.77793,
+        "address": "Khyber Pass Road",
+        "abbreviation": "KPR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 36",
+        "time": "05:37",
+        "latitude": -36.86698,
+        "longitude": 174.77468,
+        "address": "Melrose Street",
+        "abbreviation": "MS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 37",
+        "time": "05:38",
+        "latitude": -36.86537,
+        "longitude": 174.77065,
+        "address": "Grafton Station",
+        "abbreviation": "GS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 38",
+        "time": "05:40",
+        "latitude": -36.86102,
+        "longitude": 174.76909,
+        "address": "Park Road/Auckland City Hospital",
+        "abbreviation": "PR/ACH",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 39",
+        "time": "05:42",
+        "latitude": -36.85741,
+        "longitude": 174.76449,
+        "address": "Symonds Street/Karangahape Road",
+        "abbreviation": "SS/KR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 40",
+        "time": "05:43",
+        "latitude": -36.85426,
+        "longitude": 174.76789,
+        "address": "Stop E Auckland Universities",
+        "abbreviation": "EAU",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 41",
+        "time": "05:45",
+        "latitude": -36.85077,
+        "longitude": 174.7716,
+        "address": "Waterloo Quadrant",
+        "abbreviation": "WQ",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 42",
+        "time": "05:47",
+        "latitude": -36.84633,
+        "longitude": 174.77163,
+        "address": "Anzac Avenue/Beach Road",
+        "abbreviation": "AA/BR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 43",
+        "time": "05:50",
+        "latitude": -36.84508,
+        "longitude": 174.7685,
+        "address": "Britomart Commerce Street",
+        "abbreviation": "BCS",
+        "time_point": 0
+      }
+    ]
+  },
+  {
+    "routeNo": "70",
+    "startTime": "06:00",
+    "endTime": "06:52",
+    "dutyName": "70-205",
+    "busStops": [
+      {
+        "name": "Stop 1",
+        "time": "06:00",
+        "latitude": -36.84542,
+        "longitude": 174.76994,
+        "address": "Britomart Place",
+        "abbreviation": "BP",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 2",
+        "time": "06:00",
+        "latitude": -36.84643,
+        "longitude": 174.77186,
+        "address": "Anzac Avenue/Beach Road",
+        "abbreviation": "AA/BR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 3",
+        "time": "06:02",
+        "latitude": -36.85055,
+        "longitude": 174.77213,
+        "address": "Stop A Waterloo Quadrant",
+        "abbreviation": "AWQ",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 4",
+        "time": "06:04",
+        "latitude": -36.85494,
+        "longitude": 174.76747,
+        "address": "Stop C Auckland Universities",
+        "abbreviation": "CAU",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 5",
+        "time": "06:05",
+        "latitude": -36.85797,
+        "longitude": 174.76407,
+        "address": "Symonds Street/Karangahape Road",
+        "abbreviation": "SS/KR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 6",
+        "time": "06:07",
+        "latitude": -36.86167,
+        "longitude": 174.77037,
+        "address": "Park Road/Auckland City Hospital",
+        "abbreviation": "PR/ACH",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 7",
+        "time": "06:08",
+        "latitude": -36.86557,
+        "longitude": 174.77074,
+        "address": "Grafton Station",
+        "abbreviation": "GS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 8",
+        "time": "06:09",
+        "latitude": -36.86686,
+        "longitude": 174.77461,
+        "address": "Melrose Street",
+        "abbreviation": "MS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 9",
+        "time": "06:10",
+        "latitude": -36.8674,
+        "longitude": 174.77725,
+        "address": "Broadway",
+        "abbreviation": "B",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 10",
+        "time": "06:12",
+        "latitude": -36.87143,
+        "longitude": 174.77715,
+        "address": "Stop B Westfield Newmarket",
+        "abbreviation": "BWN",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 11",
+        "time": "06:12",
+        "latitude": -36.87303,
+        "longitude": 174.77714,
+        "address": "Clovernook Road",
+        "abbreviation": "CR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 12",
+        "time": "06:13",
+        "latitude": -36.87497,
+        "longitude": 174.77726,
+        "address": "St Marks Road",
+        "abbreviation": "SMR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 13",
+        "time": "06:14",
+        "latitude": -36.87738,
+        "longitude": 174.77979,
+        "address": "Ngaire Avenue",
+        "abbreviation": "NA",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 14",
+        "time": "06:15",
+        "latitude": -36.87907,
+        "longitude": 174.78194,
+        "address": "Dilworth School",
+        "abbreviation": "DS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 15",
+        "time": "06:16",
+        "latitude": -36.88316,
+        "longitude": 174.78551,
+        "address": "Great South Road/Market Road",
+        "abbreviation": "GSR/MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 16",
+        "time": "06:17",
+        "latitude": -36.88525,
+        "longitude": 174.7876,
+        "address": "Karetu Road",
+        "abbreviation": "KR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 17",
+        "time": "06:18",
+        "latitude": -36.88843,
+        "longitude": 174.79138,
+        "address": "Momona Road",
+        "abbreviation": "MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 18",
+        "time": "06:19",
+        "latitude": -36.89014,
+        "longitude": 174.79379,
+        "address": "Woolworths Greenlane",
+        "abbreviation": "WG",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 19",
+        "time": "06:20",
+        "latitude": -36.89311,
+        "longitude": 174.79782,
+        "address": "Matai Road",
+        "abbreviation": "MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 20",
+        "time": "06:22",
+        "latitude": -36.89584,
+        "longitude": 174.80355,
+        "address": "St Mary's Catholic School",
+        "abbreviation": "SMCS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 21",
+        "time": "06:23",
+        "latitude": -36.89658,
+        "longitude": 174.80569,
+        "address": "Kalmia Street",
+        "abbreviation": "KS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 22",
+        "time": "06:25",
+        "latitude": -36.89832,
+        "longitude": 174.81069,
+        "address": "Stop B Ellerslie",
+        "abbreviation": "BE",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 23",
+        "time": "06:25",
+        "latitude": -36.89895,
+        "longitude": 174.8125,
+        "address": "Ellerslie Domain",
+        "abbreviation": "ED",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 24",
+        "time": "06:25",
+        "latitude": -36.89962,
+        "longitude": 174.81612,
+        "address": "Ellerslie Panmure Highway",
+        "abbreviation": "EPH",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 25",
+        "time": "06:26",
+        "latitude": -36.89918,
+        "longitude": 174.81882,
+        "address": "Ellerslie Park Road",
+        "abbreviation": "EPR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 26",
+        "time": "06:27",
+        "latitude": -36.89811,
+        "longitude": 174.82329,
+        "address": "Ballarat Street",
+        "abbreviation": "BS",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 27",
+        "time": "06:27",
+        "latitude": -36.89757,
+        "longitude": 174.82556,
+        "address": "Harrison Road",
+        "abbreviation": "HR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 28",
+        "time": "06:28",
+        "latitude": -36.89689,
+        "longitude": 174.82884,
+        "address": "Ellerslie Panmure Highway/Stanhope Road",
+        "abbreviation": "EPH/SR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 29",
+        "time": "06:28",
+        "latitude": -36.89673,
+        "longitude": 174.83229,
+        "address": "Ellerslie Panmure Highway/Harris Road",
+        "abbreviation": "EPH/HR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 30",
+        "time": "06:29",
+        "latitude": -36.89624,
+        "longitude": 174.83585,
+        "address": "Ellerslie Panmure Highway/Burt Road",
+        "abbreviation": "EPH/BR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 31",
+        "time": "06:30",
+        "latitude": -36.89625,
+        "longitude": 174.84012,
+        "address": "Barrack Road",
+        "abbreviation": "BR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 32",
+        "time": "06:30",
+        "latitude": -36.89703,
+        "longitude": 174.84334,
+        "address": "Mountain Road",
+        "abbreviation": "MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 33",
+        "time": "06:32",
+        "latitude": -36.89845,
+        "longitude": 174.85009,
+        "address": "Stop B Panmure Station",
+        "abbreviation": "BPS",
+        "time_point": 1
+      },
+      {
+        "name": "Stop 34",
+        "time": "06:37",
+        "latitude": -36.91148,
+        "longitude": 174.86537,
+        "address": "Williams Avenue",
+        "abbreviation": "WA",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 35",
+        "time": "06:38",
+        "latitude": -36.91544,
+        "longitude": 174.87172,
+        "address": "Reeves Road/Ti Rakau Drive",
+        "abbreviation": "RR/TRD",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 36",
+        "time": "06:40",
+        "latitude": -36.91726,
+        "longitude": 174.87366,
+        "address": "Ti Rakau Park",
+        "abbreviation": "TRP",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 37",
+        "time": "06:41",
+        "latitude": -36.9194,
+        "longitude": 174.87613,
+        "address": "Marriott Road",
+        "abbreviation": "MR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 38",
+        "time": "06:42",
+        "latitude": -36.92176,
+        "longitude": 174.87924,
+        "address": "Edgewater Drive",
+        "abbreviation": "ED",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 39",
+        "time": "06:43",
+        "latitude": -36.9234,
+        "longitude": 174.88408,
+        "address": "Ti Rakau Drive/Gossamer Drive",
+        "abbreviation": "TRD/GD",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 40",
+        "time": "06:46",
+        "latitude": -36.92661,
+        "longitude": 174.89597,
+        "address": "Harris Road",
+        "abbreviation": "HR",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 41",
+        "time": "06:47",
+        "latitude": -36.9274,
+        "longitude": 174.90029,
+        "address": "Burswood Drive",
+        "abbreviation": "BD",
+        "time_point": 0
+      },
+      {
+        "name": "Stop 42",
+        "time": "06:52",
+        "latitude": -36.93226,
+        "longitude": 174.91196,
+        "address": "Stop A Botany Town Centre",
+        "abbreviation": "ABTC",
+        "time_point": 0
+      }
+    ]
+  }
+]

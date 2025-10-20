@@ -1,0 +1,417 @@
+.gtfs-widget {
+    font-family: sans-serif;
+    padding: 10px;
+    position: relative;
+}
+
+.gtfs-widget label,
+.gtfs-widget select {
+    display: inline-block;
+    vertical-align: middle;
+    margin-bottom: 10px;
+}
+
+.gtfs-widget select {
+    margin-left: 8px;
+    padding: 4px;
+}
+
+/* ZIP loaded indicator */
+.zip-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f2f2f2;
+  color: #444;
+  margin-top: 6px;
+
+  /* cross-browser text selection disable */
+  -webkit-user-select: none; /* Safari / iOS */
+  -ms-user-select: none;     /* old Edge/IE */
+  user-select: none;         /* modern browsers */
+}
+
+
+.zip-status.ok {
+  background: #e6f6ea;
+  color: #17683a;
+  border: 1px solid #b7e2c4;
+}
+.zip-status.ok::before { content: "✓"; font-weight: 700; }
+
+.zip-status.err {
+  background: #fdecea;
+  color: #a4000f;
+  border: 1px solid #f5c2c7;
+}
+.zip-status.err::before { content: "⚠"; font-weight: 700; }
+
+.zip-status.info {
+  background: #eef2ff;
+  color: #1e40af;
+  border: 1px solid #c7d2fe;
+}
+.zip-status.info::before { content: "…"; font-weight: 700; }
+
+/* Subtle success tint for the drop zone once a ZIP is loaded */
+.file-drop-zone.loaded {
+  border-color: #16a34a;
+  background: #f6fffa;
+}
+
+/* Full-blocking overlay */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: none;              /* toggled to flex while loading */
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.8);
+    z-index: 999;
+    pointer-events: all;         /* block clicks underneath */
+  }
+  .loading-overlay.show { display: flex; }
+  
+  .spinner {
+    width: 42px;
+    height: 42px;
+    border: 4px solid #ddd;
+    border-top-color: #007acc;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  .loading-text { font-weight: 600; color: #222; }
+  
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+.file-drop-zone {
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    padding: 40px;
+    text-align: center;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+}
+
+.file-drop-zone.dragover {
+    background-color: #f0f8ff;
+    border-color: #007acc;
+}
+
+/* controls row */
+.controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.controls select {
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.controls input {
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.controls button {
+    padding: 6px 10px;
+    border: 1px solid #999;
+    background: #f5f5f5;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.controls button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+/* two-column layout (stacks on narrow screens) */
+.output-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+@media (min-width: 900px) {
+    .output-split {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.panel {
+    border: 1px solid #ddd;
+    background: #fafafa;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-title {
+    font-weight: 600;
+    padding: 8px 10px;
+    background: #f3f3f3;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.download-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid #999;
+    background: #fff;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.download-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+#busRouteJson,
+#scheduleJson {
+    padding: 10px;
+    margin: 0;
+    max-height: 500px;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+
+.section-sep {
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 14px 0;
+}
+
+.planner { background: #fff; }
+
+.planner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.planner-header h3 { margin: 0; font-size: 16px; }
+
+.planner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn.small {
+  padding: 4px 8px;
+  border: 1px solid #999;
+  background: #fdfdfd;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.hint { color: #666; font-size: 12px; }
+
+/* Horizontal scroller for trips */
+.trip-columns{
+  display: flex;
+  flex-wrap: nowrap;          /* keep everything on one line */
+  gap: 16px;                  /* spacing between cards */
+  overflow-x: auto;           /* enable horizontal scroll */
+  overflow-y: hidden;
+  padding: 4px 2px 8px;
+  scroll-snap-type: x proximity;     /* nice snapping when scrolling */
+  -webkit-overflow-scrolling: touch; /* smooth on iOS */
+}
+
+.trip-col {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 10px;
+  position: relative;
+  flex: 0 0 260px;            /* card width (adjust if you like) */
+  scroll-snap-align: start;
+}
+
+.trip-col .col-actions button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* Subtle separator between columns */
+.trip-col:not(:first-child) { border-left: 3px solid #e5e5e5; }
+
+.trip-col .col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.trip-col .col-actions { display: flex; gap: 6px; }
+
+.trip-col .col-actions button {
+  padding: 2px 6px;
+  font-size: 12px;
+  border: 1px solid #bbb;
+  background: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.trip-col label {
+  display: block;
+  margin: 8px 0 4px;
+  font-size: 12px;
+  color: #444;
+}
+
+.trip-col select,
+.trip-col input[type="time"] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.trip-col .inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.trip-col .small-text { color: #555; font-size: 12px; }
+
+.trip-col .meta {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #e1e1e1;
+  color: #333;
+  font-size: 12px;
+}
+
+.roster-controls{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  font-size:12px; color:#444; margin:6px 0 10px;
+}
+.roster-controls input[type="time"]{
+  padding:4px 6px; border:1px solid #ccc; border-radius:4px;
+}
+
+/* Timing points UI */
+.tp-section {
+  margin-top: 8px;
+  border-top: 1px dashed #e5e5e5;
+  padding-top: 8px;
+}
+.tp-header { font-weight: 600; margin-bottom: 6px; }
+.tp-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+.tp-row select { flex:1 1 220px; }
+.tp-list { display:flex; flex-direction:column; gap:6px; }
+.tp-item {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 8px; border:1px solid #e8e8e8; background:#fff; border-radius:4px;
+  font-size:12px;
+}
+.tp-left { display:flex; gap:8px; align-items:center; }
+.tp-idx { font-weight:700; color:#666; }
+.tp-abbr { font-family:monospace; background:#f6f6f6; padding:2px 6px; border-radius:3px; }
+.tp-tag { font-size:11px; padding:2px 6px; border:1px solid #c9e6cd; color:#17683a; background:#eaf8ee; border-radius:999px; }
+.tp-remove {
+  padding:2px 6px; font-size:11px; border:1px solid #bbb; background:#fff;
+  border-radius:3px; cursor:pointer;
+}
+.tp-hint { color:#666; font-size:12px; margin-top:2px; }
+
+/* Two-pane inside a trip card */
+.trip-col .two-pane {
+  display: grid;
+  grid-template-columns: 1fr;  /* stack on narrow */
+  gap: 10px;
+}
+
+@media (min-width: 520px){
+  /* side-by-side once the card is wide enough */
+  .trip-col .two-pane { grid-template-columns: 1fr 1fr; }
+}
+
+@media (min-width: 700px){
+  /* give the card enough width to breathe */
+  .trip-col { flex: 0 0 560px; }
+}
+
+/* Right pane gets the vertical divider */
+.trip-col .right-pane{
+  border-left: 1px dashed #e1e1e1;
+  padding-left: 10px;
+}
+
+/* Keep your timing point visuals but remove the top separator when in right pane */
+.right-pane .tp-section{
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* (optional) tiny title for the right pane */
+.pane-title{
+  font-size:12px; font-weight:700; color:#333; margin:2px 0 6px;
+}
+
+.filter-controls{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  margin:6px 0 10px; font-size:12px; color:#444;
+}
+.filter-controls select{
+  padding:4px 6px; border:1px solid #ccc; border-radius:4px;
+}
+.chip-list{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 8px; border:1px solid #d4d4d4; background:#f6f7f9;
+  border-radius:999px; font-size:12px;
+}
+.chip .chip-text{ font-family:monospace; }
+.chip .chip-x{
+  line-height:1; border:1px solid #bbb; background:#fff;
+  border-radius:4px; padding:0 4px; cursor:pointer;
+}
+.input-split{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:12px;
+  margin-top:10px;
+}
+@media (min-width: 900px){
+  .input-split{ grid-template-columns: 1fr 1fr; }
+}
+.input-panel{
+  border:1px solid #ddd; background:#fafafa; border-radius:4px;
+  padding:10px; display:flex; flex-direction:column; gap:8px;
+}
+.input-panel .panel-title{
+  font-weight:600; font-size:14px; margin-bottom:2px;
+}
+.file-drop-zone.gtfs {}
+.file-drop-zone.school {}

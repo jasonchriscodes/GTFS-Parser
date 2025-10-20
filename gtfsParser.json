@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "title": "GTFS Provider",
+      "type": "string",
+      "enum": ["Auckland Transport", "Metlink"],
+      "default": "Auckland Transport"
+    }
+  }
+}
