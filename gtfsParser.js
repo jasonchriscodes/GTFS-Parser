@@ -262,7 +262,7 @@ function buildFromGtfs(gtfs, provider, routeId, dirId) {
         routeNo: "Route " + (i + 1),
         startTime: formatGtfsTime(first && first.departure_time),
         endTime: formatGtfsTime(last && last.arrival_time),
-        dutyName: tr.route_id,
+        runName: tr.route_id,
         busStops: busStops,
       };
     })
@@ -1700,13 +1700,13 @@ self.onInit = function () {
       scheduleData.sort((a, b) => toMin(a.startTime) - toMin(b.startTime));
       scheduleData = scheduleData.map((item, idx) => ({
         ...item,
-        routeNo: String(idx + 1),
+        runNo: String(idx + 1),
       }));
 
       // Filter to roster window
       let filteredSchedule = scheduleData.filter((it) => {
         if (
-          String(it.dutyName || "")
+          String(it.runName || "")
             .toLowerCase()
             .startsWith("school")
         ) {
@@ -1725,7 +1725,7 @@ self.onInit = function () {
       filteredSchedule.sort((a, b) => toMin(a.startTime) - toMin(b.startTime));
       filteredSchedule = filteredSchedule.map((item, idx) => ({
         ...item,
-        routeNo: String(idx + 1),
+        runNo: String(idx + 1),
       }));
 
       document.getElementById("scheduleJson").textContent = JSON.stringify(
@@ -2193,10 +2193,10 @@ self.onInit = function () {
       busRouteData,
       scheduleData: [
         {
-          routeNo,
+          runNo: routeNo,
           startTime: startHHMM, // use override-aware times
           endTime: endHHMM,
-          dutyName: tr.route_id,
+          runName: tr.route_id,
           busStops,
         },
       ],
@@ -2480,10 +2480,10 @@ self.onInit = function () {
     const meta = STOPS_BY_ID.get(stopId) || {};
     const address = meta.stop_name || "";
     return {
-      routeNo: "", // numbered later
+      runNo: "", // numbered later
       startTime: startHHMM,
       endTime: endHHMM,
-      dutyName: "REP",
+      runName: "REP",
       busStops: [
         {
           name: "Stop E",
@@ -2560,10 +2560,10 @@ self.onInit = function () {
   function makeBreakScheduleItem(prevEndStop, startHHMM, endHHMM) {
     if (!prevEndStop) return null; // can't place a break before any trip
     return {
-      routeNo: "", // set later when we re-number
+      runNo: "", // set later when we re-number
       startTime: startHHMM,
       endTime: endHHMM,
-      dutyName: "Break",
+      runName: "Break",
       busStops: [
         {
           // Show the last trip's end stop as the break location
@@ -2755,10 +2755,10 @@ self.onInit = function () {
       busRouteData,
       scheduleData: [
         {
-          routeNo: "", // renumbered later
+          runNo: "", // renumbered later
           startTime: startHHMM || "",
           endTime: endHHMM || "",
-          dutyName: r.number ? `School ${r.number}` : `School`,
+          runName: r.number ? `School ${r.number}` : `School`,
           busStops,
         },
       ],
