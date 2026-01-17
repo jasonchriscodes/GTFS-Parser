@@ -1602,6 +1602,60 @@ self.onInit = function () {
     }
   };
 
+  function buildTripEndpointsIndex(gtfs) {
+    const stopTimes = gtfs?.stop_times || [];
+    const stops = gtfs?.stops || [];
+
+    // stop_id -> stop_name
+    const stopNameById = new Map();
+    stops.forEach((s) => {
+      stopNameById.set(String(s.stop_id), s.stop_name || "");
+    });
+
+    // trip_id -> { minSeq, startStopId, maxSeq, endStopId }
+    const agg = new Map();
+
+    for (const st of stopTimes) {
+      const tripId = String(st.trip_id || "");
+      const stopId = String(st.stop_id || "");
+      const seq = parseInt(st.stop_sequence, 10);
+
+      if (!tripId || !stopId || !Number.isFinite(seq)) continue;
+
+      const cur = agg.get(tripId);
+      if (!cur) {
+        agg.set(tripId, {
+          minSeq: seq,
+          startStopId: stopId,
+          maxSeq: seq,
+          endStopId: stopId,
+        });
+        continue;
+      }
+
+      if (seq < cur.minSeq) {
+        cur.minSeq = seq;
+        cur.startStopId = stopId;
+      }
+      if (seq > cur.maxSeq) {
+        cur.maxSeq = seq;
+        cur.endStopId = stopId;
+      }
+    }
+
+    // finalize: trip_id -> { startName, endName, startStopId, endStopId }
+    const out = new Map();
+    for (const [tripId, v] of agg.entries()) {
+      out.set(tripId, {
+        startStopId: v.startStopId,
+        endStopId: v.endStopId,
+        startName: stopNameById.get(v.startStopId) || "",
+        endName: stopNameById.get(v.endStopId) || "",
+      });
+    }
+    return out;
+  }
+
   // Generate on click
   generateBtn.addEventListener("click", async function () {
     try {
@@ -1819,46 +1873,43 @@ self.onInit = function () {
   function collectDepDestForRoute(gtfs, routeId) {
     const deps = new Set();
     const dests = new Set();
-    const viaMap = new Map(); // optional: dep||dest -> via
 
     const endpoints = ctx.tripEndpoints || new Map();
 
     (gtfs.trips || []).forEach((tr) => {
       if (tr.route_id !== routeId) return;
 
-      const ep = endpoints.get(tr.trip_id);
-
+      const ep = endpoints.get(String(tr.trip_id));
       if (!ep) return;
 
-      const headsign = tr.trip_headsign;
-
-      if (headsign) {
-        if (ep.is_start) deps.add(headsign);
-        if (ep.is_end) dests.add(headsign);
-      }
-
-      if (ep.is_start || ep.is_end) {
-        const via = viaMap.get(headsign) || "";
-        viaMap.set(headsign, via + (via ? " → " : "") + routeId);
-      }
+      if (ep.startName) deps.add(ep.startName);
+      if (ep.endName) dests.add(ep.endName);
     });
 
-    return { deps, dests, viaMap };
+    const sort = (a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+
+    return { deps: [...deps].sort(sort), dests: [...dests].sort(sort) };
   }
 
   // Get destinations allowed for (routeId, dep) based on headsigns
   function destinationsForRouteAndDep(gtfs, routeId, dep) {
     const dests = new Set();
-    const endpoints = new Map();
+    const endpoints = ctx.tripEndpoints || new Map();
 
     (gtfs.trips || []).forEach((tr) => {
       if (tr.route_id !== routeId) return;
-      const ep = endpoints.get(tr.trip_id);
+
+      const ep = endpoints.get(String(tr.trip_id));
       if (!ep) return;
-      if (ep.startName === dep && ep.endName) dests.add(ep.endName);
+
+      if ((ep.startName || "") === dep && ep.endName) dests.add(ep.endName);
     });
 
-    return dests;
+    const sort = (a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+
+    return [...dests].sort(sort);
   }
 
   // "HH:MM" -> minutes [0..1439]
@@ -2038,24 +2089,33 @@ self.onInit = function () {
   function findCandidateTripForRoute(
     gtfs,
     routeId,
-    dep,
-    dest,
+    depName,
+    destName,
     roster,
     notBefore,
   ) {
-    if (!routeId || !dep || !dest) return null;
-    const trips = (gtfs.trips || []).filter((t) => t.route_id === routeId);
+    if (!routeId || !depName || !destName) return null;
+
+    const trips = (gtfs.trips || []).filter(
+      (t) => String(t.route_id) === String(routeId),
+    );
     const st = gtfs.stop_times || [];
+    const endpoints = ctx.tripEndpoints || new Map();
     const threshold = notBefore ? padToHHMMSS(notBefore) : null;
 
-    const candidates = [];
+    let best = null;
+
     for (const tr of trips) {
-      const p = parseHeadsign(tr.trip_headsign);
-      if (!p || p.dep !== dep || p.dest !== dest) continue;
+      const ep = endpoints.get(String(tr.trip_id));
+      if (!ep) continue;
+
+      // dep/dest are STOP NAMES (from endpoints index)
+      if (ep.startName !== depName || ep.endName !== destName) continue;
 
       const rows = st
         .filter((r) => r.trip_id === tr.trip_id)
         .sort((a, b) => +a.stop_sequence - +b.stop_sequence);
+
       if (!rows.length) continue;
 
       const depTime = rows[0].departure_time || rows[0].arrival_time || "";
@@ -2064,23 +2124,26 @@ self.onInit = function () {
         rows[rows.length - 1].departure_time ||
         "";
 
-      // Keep it inside the roster…
+      // roster filter
       if (roster && !isInRosterWindow(depTime, roster.start, roster.end))
         continue;
-      // …and not before the chain threshold (prev arrival or roster start)
+
+      // threshold filter
       if (threshold && padToHHMMSS(depTime) < threshold) continue;
 
-      candidates.push({
-        trip: tr,
-        times: { depTime, arrTime },
-        via: via,
-      });
+      // choose earliest departure that satisfies threshold/roster
+      if (!best || (depTime || "") < (best.times.depTime || "")) {
+        best = {
+          trip: tr,
+          times: {
+            depTime,
+            arrTime,
+          },
+        };
+      }
     }
-    if (!candidates.length) return null;
-    candidates.sort((a, b) =>
-      (a.times.depTime || "").localeCompare(b.times.depTime || ""),
-    );
-    return candidates[0];
+
+    return best;
   }
 
   // Build outputs for a *single* trip_id
