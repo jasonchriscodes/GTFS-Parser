@@ -1530,12 +1530,14 @@ self.onInit = function () {
       setZipStatus("info", "Reading ZIP…");
 
       // Parse the GTFS archive
-      ctx.gtfs = await parseZip(file);
+      ctx.gtfs = awaitparseZip(file);
       STOPS_BY_ID = stopsByIdMap(ctx.gtfs.stops || []);
       routesById = indexByRouteId(ctx.gtfs.routes || []);
       routeIdList = Array.from(
-        new Set((ctx.gtfs.trips || []).map((t) => t.route_id)),
+        newSet((ctx.gtfs.trips || []).map((t) => t.route_id)),
       ).sort(naturalCompare);
+
+      ctx.tripEndpoints = buildTripEndpointsIndex(ctx.gtfs);
 
       // reset filter on new ZIP and render UI
       ctx.routeFilters = new Set();
@@ -1813,31 +1815,46 @@ self.onInit = function () {
   function collectDepDestForRoute(gtfs, routeId) {
     const deps = new Set();
     const dests = new Set();
-    const viaMap = new Map(); // key "dep||dest" -> via
+    const viaMap = new Map(); // optional: dep||dest -> via
+
+    const endpoints = ctx.tripEndpoints || new Map();
+
     (gtfs.trips || []).forEach((tr) => {
       if (tr.route_id !== routeId) return;
-      const p = parseHeadsign(tr.trip_headsign);
-      if (!p) return;
-      deps.add(p.dep);
-      dests.add(p.dest);
-      if (p.via) viaMap.set(p.dep + "||" + p.dest, p.via);
+
+      const ep = endpoints.get(tr.trip_id);
+
+      if (!ep) return;
+
+      const headsign = tr.trip_headsign;
+
+      if (headsign) {
+        if (ep.is_start) deps.add(headsign);
+        if (ep.is_end) dests.add(headsign);
+      }
+
+      if (ep.is_start || ep.is_end) {
+        const via = viaMap.get(headsign) || "";
+        viaMap.set(headsign, via + (via ? " → " : "") + routeId);
+      }
     });
-    const sort = (a, b) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
-    return { deps: [...deps].sort(sort), dests: [...dests].sort(sort), viaMap };
+
+    return { deps, dests, viaMap };
   }
 
   // Get destinations allowed for (routeId, dep) based on headsigns
-  function destsForRouteAndDep(gtfs, routeId, dep) {
+  function destinationsForRouteAndDep(gtfs, routeId, dep) {
     const dests = new Set();
+    const endpoints = new Map();
+
     (gtfs.trips || []).forEach((tr) => {
       if (tr.route_id !== routeId) return;
-      const p = parseHeadsign(tr.trip_headsign);
-      if (p && p.dep === dep) dests.add(p.dest);
+      const ep = endpoints.get(tr.trip_id);
+      if (!ep) return;
+      if (ep.startName === dep && ep.endName) dests.add(ep.endName);
     });
-    const sort = (a, b) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
-    return [...dests].sort(sort);
+
+    return dests;
   }
 
   // "HH:MM" -> minutes [0..1439]
@@ -2052,7 +2069,7 @@ self.onInit = function () {
       candidates.push({
         trip: tr,
         times: { depTime, arrTime },
-        via: p.via || "",
+        via: via,
       });
     }
     if (!candidates.length) return null;
