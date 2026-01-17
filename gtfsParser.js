@@ -611,7 +611,7 @@ self.onInit = function () {
         e.preventDefault();
       }
     },
-    { passive: false }
+    { passive: false },
   );
 
   // start with roster UI disabled until a ZIP is loaded
@@ -693,7 +693,7 @@ self.onInit = function () {
             col.routeId,
             col.dep,
             col.dest,
-            ctx.roster
+            ctx.roster,
           )
         : null;
 
@@ -723,7 +723,7 @@ self.onInit = function () {
       const en = c.breakEnd ? `<div>End: ${hhmm(c.breakEnd)}</div>` : "";
       const du = `<div>Duration: ${Math.max(
         0,
-        Number(c.breakMin) || 0
+        Number(c.breakMin) || 0,
       )} min</div>`;
       return (
         st + en + du || `<div class="small-text">Set a break duration</div>`
@@ -737,7 +737,7 @@ self.onInit = function () {
       const toLine = `<div>To: ${to || "—"}</div>`;
       const du = `<div>Duration: ${Math.max(
         0,
-        Number(c.repMin) || 0
+        Number(c.repMin) || 0,
       )} min</div>`;
       return (
         toLine + st + en + du || `<div class="small-text">Choose a stop</div>`
@@ -788,8 +788,8 @@ self.onInit = function () {
           v === "reposition"
             ? "Reposition (REP)"
             : v === "school"
-            ? "School run"
-            : v[0].toUpperCase() + v.slice(1);
+              ? "School run"
+              : v[0].toUpperCase() + v.slice(1);
         typeSel.appendChild(o);
       });
 
@@ -876,8 +876,8 @@ self.onInit = function () {
       removeBtn.title = !ctx.rosterReady
         ? "Pick a roster window to enable removing trips"
         : ctx.planner.cols.length <= 1
-        ? "At least one trip column is required"
-        : "Remove this trip";
+          ? "At least one trip column is required"
+          : "Remove this trip";
       removeBtn.onclick = () => {
         if (!canRemoveTrip()) return;
         delete ctx.tps[col.id]; // clean timing-point state for this column
@@ -1050,7 +1050,7 @@ self.onInit = function () {
             recomputeSequentialFrom(Math.max(0, idx));
           },
           1,
-          "— Dep —"
+          "— Dep —",
         );
 
         const arrTimeLabel = document.createElement("label");
@@ -1071,7 +1071,7 @@ self.onInit = function () {
             recomputeSequentialFrom(Math.max(0, idx));
           },
           1,
-          "— Arr —"
+          "— Arr —",
         );
 
         // Optional: disable until a trip is fully targeted
@@ -1354,14 +1354,14 @@ self.onInit = function () {
           col.schoolStart = clampHHMMToRoster(
             col.schoolStart || ctx.roster.start,
             ctx.roster.start,
-            ctx.roster.end
+            ctx.roster.end,
           );
           // Do NOT default End to Start; leave blank so UI shows “— End —”
           if (col.schoolEnd) {
             col.schoolEnd = clampHHMMToRoster(
               col.schoolEnd,
               ctx.roster.start,
-              ctx.roster.end
+              ctx.roster.end,
             );
             if (forwardArcMinutes(col.schoolStart, col.schoolEnd) < 0) {
               col.schoolEnd = col.schoolStart;
@@ -1398,7 +1398,7 @@ self.onInit = function () {
           },
           1,
           "— Start —",
-          mustBeAfter // ← NEW: remove earlier options from dropdown
+          mustBeAfter, // ← NEW: remove earlier options from dropdown
         );
 
         const sEndLabel = document.createElement("label");
@@ -1422,7 +1422,7 @@ self.onInit = function () {
           },
           1,
           "— End —",
-          mustBeAfter // ← removes any option before previous trip arrival
+          mustBeAfter, // ← removes any option before previous trip arrival
         );
 
         left.appendChild(sRouteLabel);
@@ -1514,14 +1514,14 @@ self.onInit = function () {
       if (!/\.zip$/i.test(file.name)) {
         setZipStatus(
           "err",
-          `This doesn’t look like a ZIP file: <code>${file.name}</code>`
+          `This doesn’t look like a ZIP file: <code>${file.name}</code>`,
         );
         throw "Selected file is not a .zip";
       }
       if (file.size === 0) {
         setZipStatus(
           "err",
-          `The file <code>${file.name}</code> is empty (0 bytes).`
+          `The file <code>${file.name}</code> is empty (0 bytes).`,
         );
         throw "Empty file";
       }
@@ -1534,7 +1534,7 @@ self.onInit = function () {
       STOPS_BY_ID = stopsByIdMap(ctx.gtfs.stops || []);
       routesById = indexByRouteId(ctx.gtfs.routes || []);
       routeIdList = Array.from(
-        new Set((ctx.gtfs.trips || []).map((t) => t.route_id))
+        new Set((ctx.gtfs.trips || []).map((t) => t.route_id)),
       ).sort(naturalCompare);
 
       // reset filter on new ZIP and render UI
@@ -1575,13 +1575,13 @@ self.onInit = function () {
           routes === 1 ? "" : "s"
         } • ${trips} trip${trips === 1 ? "" : "s"} • ${stops} stop${
           stops === 1 ? "" : "s"
-        } • ${shapes} shape row${shapes === 1 ? "" : "s"}`
+        } • ${shapes} shape row${shapes === 1 ? "" : "s"}`,
       );
       gtfsDz?.classList.add("loaded");
       setStatusHTML(
         gtfsStatus,
         "ok",
-        `ZIP loaded: <code>${file.name}</code> • …`
+        `ZIP loaded: <code>${file.name}</code> • …`,
       );
     } catch (e) {
       const message = explainZipError(e, files && files[0]);
@@ -1619,7 +1619,7 @@ self.onInit = function () {
             meta,
             extraTP,
             col.depOverride || null,
-            col.arrOverride || null
+            col.arrOverride || null,
           );
           // busRouteData: only from trips
           outBusRouteData.push(...res.busRouteData);
@@ -1636,7 +1636,7 @@ self.onInit = function () {
           const repItem = makeRepositionScheduleItem(
             col.repStopId,
             startHHMM,
-            endHHMM
+            endHHMM,
           );
           if (repItem) {
             outSchedule.push(repItem);
@@ -1652,7 +1652,7 @@ self.onInit = function () {
           const bItem = makeBreakScheduleItem(
             lastTripEndStop,
             startHHMM,
-            endHHMM
+            endHHMM,
           );
           if (bItem) outSchedule.push(bItem);
           // Note: do not change lastTripEndStop; break doesn't move location
@@ -1683,7 +1683,7 @@ self.onInit = function () {
       document.getElementById("busRouteJson").textContent = JSON.stringify(
         outBusRouteData,
         null,
-        2
+        2,
       );
 
       // Sort, roster-filter, and renumber routeNo as before
@@ -1714,7 +1714,7 @@ self.onInit = function () {
             it.startTime,
             it.endTime,
             ctx.roster.start,
-            ctx.roster.end
+            ctx.roster.end,
           );
         }
         // original behavior for GTFS trips/Break/REP (by start time)
@@ -1731,7 +1731,7 @@ self.onInit = function () {
       document.getElementById("scheduleJson").textContent = JSON.stringify(
         filteredSchedule,
         null,
-        2
+        2,
       );
 
       setDownloadEnabled(true);
@@ -1882,7 +1882,7 @@ self.onInit = function () {
     onChange,
     stepMin = 1,
     placeholder = "— Select —",
-    minHHMM
+    minHHMM,
   ) {
     const rs = hhmmToMin(roster?.start),
       re = hhmmToMin(roster?.end);
@@ -2020,7 +2020,7 @@ self.onInit = function () {
     dep,
     dest,
     roster,
-    notBefore
+    notBefore,
   ) {
     if (!routeId || !dep || !dest) return null;
     const trips = (gtfs.trips || []).filter((t) => t.route_id === routeId);
@@ -2057,7 +2057,7 @@ self.onInit = function () {
     }
     if (!candidates.length) return null;
     candidates.sort((a, b) =>
-      (a.times.depTime || "").localeCompare(b.times.depTime || "")
+      (a.times.depTime || "").localeCompare(b.times.depTime || ""),
     );
     return candidates[0];
   }
@@ -2069,7 +2069,7 @@ self.onInit = function () {
     routeMeta,
     extraStopIds,
     overrideStartHHMM,
-    overrideEndHHMM
+    overrideEndHHMM,
   ) {
     const trips = gtfs.trips || [];
     const stop_times = gtfs.stop_times || [];
@@ -2297,7 +2297,7 @@ self.onInit = function () {
           c.schoolStart = clampHHMMToRoster(
             c.schoolStart,
             ctx.roster.start,
-            ctx.roster.end
+            ctx.roster.end,
           );
         }
 
@@ -2306,7 +2306,7 @@ self.onInit = function () {
           c.schoolEnd = clampHHMMToRoster(
             c.schoolEnd,
             ctx.roster.start,
-            ctx.roster.end
+            ctx.roster.end,
           );
           // Ensure end is not "before" start along the 24h ring
           if (forwardArcMinutes(c.schoolStart, c.schoolEnd) < 0) {
@@ -2330,7 +2330,7 @@ self.onInit = function () {
             c.dep,
             c.dest,
             ctx.roster,
-            last
+            last,
           );
           if (cand) {
             c.tripId = cand.trip.trip_id;
@@ -2384,7 +2384,7 @@ self.onInit = function () {
     const [h = "0", m = "0", s = "0"] = String(t).split(":");
     return `${String(h).padStart(2, "0")}:${String(m).padStart(
       2,
-      "0"
+      "0",
     )}:${String(s || "0").padStart(2, "0")}`;
   }
 
@@ -2462,12 +2462,12 @@ self.onInit = function () {
     // limit to stops that appear on trips whose route_id is in the filter
     const allowedRoutes = new Set(ctx.routeFilters);
     const allowedTripIds = new Set(
-      trips.filter((t) => allowedRoutes.has(t.route_id)).map((t) => t.trip_id)
+      trips.filter((t) => allowedRoutes.has(t.route_id)).map((t) => t.trip_id),
     );
     const allowedStopIds = new Set(
       stop_times
         .filter((st) => allowedTripIds.has(st.trip_id))
-        .map((st) => st.stop_id)
+        .map((st) => st.stop_id),
     );
     return stops
       .filter((s) => allowedStopIds.has(s.stop_id))
@@ -2595,7 +2595,7 @@ self.onInit = function () {
       if (!f || !f.geometry || f.geometry.type !== "MultiLineString") continue;
       const props = f.properties || {};
       const id = String(
-        props.ROUTEPATTERN || props.OBJECTID || crypto.randomUUID()
+        props.ROUTEPATTERN || props.OBJECTID || crypto.randomUUID(),
       );
       const name = String(props.ROUTENAME || props.ROUTENUMBER || id);
       const agency = String(props.AGENCYNAME || props.AGENCY || "");
@@ -2669,13 +2669,13 @@ self.onInit = function () {
         "ok",
         `School GeoJSON loaded: <code>${file.name}</code> • ${
           routes.length
-        } route${routes.length === 1 ? "" : "s"}`
+        } route${routes.length === 1 ? "" : "s"}`,
       );
       schoolDz?.classList.add("loaded");
       setStatusHTML(
         schoolStatus,
         "ok",
-        `School GeoJSON loaded: <code>${file.name}</code> • ${routes.length} routes`
+        `School GeoJSON loaded: <code>${file.name}</code> • ${routes.length} routes`,
       );
 
       // Friendly prompt
