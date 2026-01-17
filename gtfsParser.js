@@ -993,7 +993,11 @@ self.onInit = function () {
 
         let destOpts = [];
         if (col.routeId && col.dep) {
-          destOpts = destsForRouteAndDep(ctx.gtfs || {}, col.routeId, col.dep);
+          destOpts = destinationsForRouteAndDep(
+            ctx.gtfs || {},
+            col.routeId,
+            col.dep,
+          );
         }
         destOpts.forEach((v) => {
           const o = document.createElement("option");
@@ -1530,11 +1534,11 @@ self.onInit = function () {
       setZipStatus("info", "Reading ZIP…");
 
       // Parse the GTFS archive
-      ctx.gtfs = awaitparseZip(file);
+      ctx.gtfs = await parseZip(file);
       STOPS_BY_ID = stopsByIdMap(ctx.gtfs.stops || []);
       routesById = indexByRouteId(ctx.gtfs.routes || []);
       routeIdList = Array.from(
-        newSet((ctx.gtfs.trips || []).map((t) => t.route_id)),
+        new Set((ctx.gtfs.trips || []).map((t) => t.route_id)),
       ).sort(naturalCompare);
 
       ctx.tripEndpoints = buildTripEndpointsIndex(ctx.gtfs);
