@@ -345,6 +345,109 @@ self.onInit = function () {
   const gtfsStatus = document.getElementById("gtfsStatus");
   const schoolStatus = document.getElementById("schoolStatus");
 
+  // ---------- Custom stops (user-defined) ----------
+  ctx.customStops = ctx.customStops || []; // [{id,name,lat,lon}]
+  ctx.customStopById = ctx.customStopById || new Map();
+  ctx.customStopTokens = ctx.customStopTokens || new Map(); // col.id -> token
+  ctx.customStopTokenSeq = ctx.customStopTokenSeq || 0;
+
+  // Routing cache: "lon,lat|lon,lat" -> {coords, duration_s, distance_m}
+  ctx.routeApiCache = ctx.routeApiCache || new Map();
+
+  const customStopNameEl = document.getElementById("customStopName");
+  const customStopLatEl = document.getElementById("customStopLat");
+  const customStopLonEl = document.getElementById("customStopLon");
+  const addCustomStopBtn = document.getElementById("addCustomStopBtn");
+  const customStopChips = document.getElementById("customStopChips");
+  const customStopStatus = document.getElementById("customStopStatus");
+
+  function showCustomStopStatus(state, text) {
+    if (!customStopStatus) return;
+    customStopStatus.hidden = false;
+    customStopStatus.className = "zip-status " + (state || "info");
+    customStopStatus.textContent = text || "";
+    // auto-hide success/info after a bit
+    if (state === "ok" || state === "info") {
+      setTimeout(() => {
+        if (customStopStatus) customStopStatus.hidden = true;
+      }, 1800);
+    }
+  }
+
+  function newCustomStopId() {
+    return "cs_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+  }
+
+  function isValidLatLon(lat, lon) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return false;
+    return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+  }
+
+  function upsertCustomStop(cs) {
+    ctx.customStopById.set(cs.id, cs);
+    const i = (ctx.customStops || []).findIndex((x) => x.id === cs.id);
+    if (i >= 0) ctx.customStops[i] = cs;
+    else ctx.customStops.push(cs);
+  }
+
+  function removeCustomStop(id) {
+    ctx.customStops = (ctx.customStops || []).filter((x) => x.id !== id);
+    ctx.customStopById.delete(id);
+  }
+
+  function renderCustomStopChips() {
+    if (!customStopChips) return;
+    customStopChips.innerHTML = "";
+
+    (ctx.customStops || []).forEach((cs) => {
+      const chip = document.createElement("div");
+      chip.className = "chip";
+
+      const t = document.createElement("span");
+      t.className = "chip-text";
+      t.textContent = `${cs.name} (${cs.lat.toFixed(5)},${cs.lon.toFixed(5)})`;
+
+      const x = document.createElement("button");
+      x.type = "button";
+      x.className = "chip-x";
+      x.textContent = "×";
+      x.title = "Remove custom stop";
+      x.onclick = () => {
+        removeCustomStop(cs.id);
+        renderCustomStopChips();
+        renderColumns(); // refresh trip/break/rep dropdowns
+      };
+
+      chip.appendChild(t);
+      chip.appendChild(x);
+      customStopChips.appendChild(chip);
+    });
+  }
+
+  // initial paint (if any)
+  renderCustomStopChips();
+
+  addCustomStopBtn?.addEventListener("click", () => {
+    const name = (customStopNameEl?.value || "").trim();
+    const lat = parseFloat((customStopLatEl?.value || "").trim());
+    const lon = parseFloat((customStopLonEl?.value || "").trim());
+
+    if (!name) return showCustomStopStatus("err", "Enter a stop name.");
+    if (!isValidLatLon(lat, lon))
+      return showCustomStopStatus("err", "Enter valid lat/lon.");
+
+    const cs = { id: newCustomStopId(), name, lat, lon };
+    upsertCustomStop(cs);
+
+    if (customStopNameEl) customStopNameEl.value = "";
+    if (customStopLatEl) customStopLatEl.value = "";
+    if (customStopLonEl) customStopLonEl.value = "";
+
+    showCustomStopStatus("ok", "Custom stop added.");
+    renderCustomStopChips();
+    renderColumns();
+  });
+
   function nextFrame() {
     return new Promise(requestAnimationFrame);
   }
@@ -718,6 +821,41 @@ self.onInit = function () {
   }
 
   function metaHtml(c) {
+    // custom trip meta (route API)
+    if (c.customLeg && c.customLeg.kind === "customTrip") {
+      const start = c.customLeg.start?.name || "Start";
+      const end = c.customLeg.end?.name || "Custom stop";
+      const pending = c.customLeg.pending
+        ? `<div>Routing: calculating…</div>`
+        : "";
+      const err = c.customLeg.error
+        ? `<div style="color:#a4000f">Routing failed: ${c.customLeg.error}</div>`
+        : "";
+      const dist = c.customLeg.distance_m
+        ? `<div>Distance: ${km(c.customLeg.distance_m).toFixed(2)} km</div>`
+        : "";
+      const dur = c.customLeg.duration_s
+        ? `<div>ETA: ${Math.round(mins(c.customLeg.duration_s))} min</div>`
+        : "";
+      const depEff = effDepHHMM(c);
+      const arrEff = effArrHHMM(c);
+      const dep = depEff
+        ? `<div>Dep: ${depEff}${c.depOverride ? " (edited)" : ""}</div>`
+        : "";
+      const arr = arrEff
+        ? `<div>Arr: ${arrEff}${c.arrOverride ? " (edited)" : ""}</div>`
+        : "";
+      return (
+        `<div>Custom leg: ${start} →${end}</div>` +
+        dep +
+        arr +
+        dist +
+        dur +
+        pending +
+        err
+      );
+    }
+
     if (c.kind === "break") {
       const st = c.breakStart ? `<div>Start: ${hhmm(c.breakStart)}</div>` : "";
       const en = c.breakEnd ? `<div>End: ${hhmm(c.breakEnd)}</div>` : "";
@@ -1234,6 +1372,54 @@ self.onInit = function () {
           recomputeSequentialFrom(Math.max(0, idx));
         };
 
+        const bLocLabel = document.createElement("label");
+        bLocLabel.textContent = "Break location (optional)";
+        const bLocSel = document.createElement("select");
+
+        // default = use last trip end stop
+        const defLoc = document.createElement("option");
+        defLoc.value = "";
+        defLoc.textContent = "— Use last trip end stop —";
+        bLocSel.appendChild(defLoc);
+
+        // custom stops
+        if (ctx.customStops && ctx.customStops.length) {
+          const og = document.createElement("optgroup");
+          og.label = "Custom stops";
+          ctx.customStops.forEach((cs) => {
+            const o = document.createElement("option");
+            o.value = "custom:" + cs.id;
+            o.textContent = "★ " + cs.name;
+            og.appendChild(o);
+          });
+          bLocSel.appendChild(og);
+        }
+
+        // GTFS stops (filtered like REP)
+        const opts = filteredStopsOptions();
+        if (opts.length) {
+          const og2 = document.createElement("optgroup");
+          og2.label = "GTFS stops";
+          opts.forEach((s) => {
+            const o = document.createElement("option");
+            o.value = String(s.stop_id);
+            o.textContent = stopLabel(s);
+            og2.appendChild(o);
+          });
+          bLocSel.appendChild(og2);
+        }
+
+        bLocSel.value = col.breakStopId || "";
+        bLocSel.disabled =
+          !ctx.rosterReady || (!opts.length && !(ctx.customStops || []).length);
+        bLocSel.onchange = () => {
+          col.breakStopId = bLocSel.value || "";
+          renderColumns();
+        };
+
+        left.appendChild(bLocLabel);
+        left.appendChild(bLocSel);
+
         const bStartLabel = document.createElement("label");
         bStartLabel.textContent = "Start";
         const bStart = document.createElement("input");
@@ -1256,7 +1442,6 @@ self.onInit = function () {
         left.appendChild(bEnd);
         right.style.display = "none";
       } else if (col.kind === "reposition") {
-        // REPOSITION UI in left pane; right pane hidden
         const rDurLabel = document.createElement("label");
         rDurLabel.textContent = "Reposition duration (minutes)";
         const rDur = document.createElement("input");
@@ -1264,7 +1449,6 @@ self.onInit = function () {
         rDur.min = "1";
         rDur.step = "1";
         rDur.value = Math.max(1, Number(col.repMin || 15));
-
         rDur.oninput = () => {
           col.repMin = Math.max(1, parseInt(rDur.value, 10) || 1);
           const idx = ctx.planner.cols.findIndex((c) => c.id === col.id);
@@ -1273,32 +1457,39 @@ self.onInit = function () {
 
         const rToLabel = document.createElement("label");
         rToLabel.textContent = "Reposition to";
+
         const rToSel = document.createElement("select");
         const def = document.createElement("option");
         def.value = "";
         def.textContent = "— Select stop —";
         rToSel.appendChild(def);
-        const opts = filteredStopsOptions();
-        const keepCurrent =
-          col.repStopId && !opts.some((s) => s.stop_id === col.repStopId);
-        if (keepCurrent) {
-          const ghost = STOPS_BY_ID.get(col.repStopId);
-          if (ghost) {
+
+        // Custom stops
+        if (ctx.customStops && ctx.customStops.length) {
+          const og = document.createElement("optgroup");
+          og.label = "Custom stops";
+          ctx.customStops.forEach((cs) => {
             const o = document.createElement("option");
-            o.value = ghost.stop_id;
-            o.textContent = stopLabel(ghost) + " (not in filter)";
-            rToSel.appendChild(o);
-          }
+            o.value = "custom:" + cs.id;
+            o.textContent = "★ " + cs.name;
+            og.appendChild(o);
+          });
+          rToSel.appendChild(og);
         }
+
+        // GTFS stops
+        const opts = filteredStopsOptions();
         opts.forEach((s) => {
           const o = document.createElement("option");
-          o.value = s.stop_id;
+          o.value = String(s.stop_id);
           o.textContent = stopLabel(s);
           rToSel.appendChild(o);
         });
+
         rToSel.value = col.repStopId || "";
         rToSel.disabled =
-          !ctx.gtfs || (opts.length === 0 && !keepCurrent) || !ctx.rosterReady;
+          !ctx.rosterReady || (!opts.length && !(ctx.customStops || []).length);
+
         rToSel.onchange = () => {
           col.repStopId = rToSel.value || "";
           const idx = ctx.planner.cols.findIndex((c) => c.id === col.id);
@@ -1327,6 +1518,7 @@ self.onInit = function () {
         left.appendChild(rStart);
         left.appendChild(rEndLabel);
         left.appendChild(rEnd);
+
         right.style.display = "none";
       } else if (col.kind === "school") {
         // LEFT pane: route + times
@@ -1492,6 +1684,7 @@ self.onInit = function () {
       schoolRouteId: "", // one of ctx.school.routes[].id
       schoolStart: "", // "HH:MM"
       schoolEnd: "", // "HH:MM"
+      breakStopId: "", // "" means use last trip end; can be "stop_id" or "custom:<id>"
     });
     renderColumns();
     validateUI();
@@ -1670,25 +1863,38 @@ self.onInit = function () {
       let lastTripEndStop = null; // remember last trip's end stop for breaks
 
       for (const col of cols) {
-        if (col.kind === "trip" && col.tripId) {
-          const meta = (routesById || {})[col.routeId];
-          const extraTP = Array.from(ctx.tps[col.id]?.custom || []);
-          const res = buildFromTrip(
-            ctx.gtfs,
-            col.tripId,
-            meta,
-            extraTP,
-            col.depOverride || null,
-            col.arrOverride || null,
-          );
-          // busRouteData: only from trips
-          outBusRouteData.push(...res.busRouteData);
-          // scheduleData: single item per trip from buildFromTrip
-          const item = res.scheduleData[0];
-          outSchedule.push(item);
-          // remember the last stop of this trip for the following break
-          const bs = item.busStops || [];
-          if (bs.length) lastTripEndStop = bs[bs.length - 1];
+        if (col.kind === "trip") {
+          if (col.tripId) {
+            // normal GTFS trip
+            const meta = (routesById || {})[col.routeId];
+            const extraTP = Array.from(ctx.tps[col.id]?.custom || []);
+            const res = buildFromTrip(
+              ctx.gtfs,
+              col.tripId,
+              meta,
+              extraTP,
+              col.depOverride || null,
+              col.arrOverride || null,
+            );
+            outBusRouteData.push(...res.busRouteData);
+            const item = res.scheduleData[0];
+            outSchedule.push(item);
+            const bs = item.busStops || [];
+            if (bs.length) lastTripEndStop = bs[bs.length - 1];
+          } else if (
+            col.customLeg &&
+            col.customLeg.kind === "customTrip" &&
+            !col.customLeg.pending
+          ) {
+            // custom leg trip
+            const depHHMM = effDepHHMM(col);
+            const arrHHMM = effArrHHMM(col);
+            const res = buildFromCustomLeg(col, depHHMM, arrHHMM);
+            outBusRouteData.push(...res.busRouteData);
+            outSchedule.push(...res.scheduleData);
+            const bs = res.scheduleData[0]?.busStops || [];
+            if (bs.length) lastTripEndStop = bs[bs.length - 1];
+          }
         } else if (col.kind === "reposition") {
           // Build a REP item with only the END stop = selected stop
           const startHHMM = hhmm(col.repStart);
@@ -1706,14 +1912,38 @@ self.onInit = function () {
           }
           // no busRouteData for reposition
         } else if (col.kind === "break") {
-          // Use recomputed times from your sequential chain
-          const startHHMM = hhmm(col.breakStart); // "HH:MM"
+          const startHHMM = hhmm(col.breakStart);
           const endHHMM = hhmm(col.breakEnd);
-          const bItem = makeBreakScheduleItem(
-            lastTripEndStop,
-            startHHMM,
-            endHHMM,
-          );
+
+          // override location if user chose one
+          let loc = lastTripEndStop;
+          if (col.breakStopId) {
+            if (String(col.breakStopId).startsWith("custom:")) {
+              const id = String(col.breakStopId).slice("custom:".length);
+              const cs = ctx.customStopById.get(id);
+              if (cs) {
+                loc = {
+                  latitude: cs.lat,
+                  longitude: cs.lon,
+                  address: cs.name,
+                  abbreviation: getAbbreviation(cs.name),
+                };
+              }
+            } else {
+              const s = STOPS_BY_ID.get(col.breakStopId);
+              if (s) {
+                loc = {
+                  latitude: s.stop_lat != null ? +s.stop_lat : null,
+                  longitude: s.stop_lon != null ? +s.stop_lon : null,
+                  address: s.stop_name || "",
+                  abbreviation: s.stop_name ? getAbbreviation(s.stop_name) : "",
+                };
+              }
+            }
+          }
+
+          const bItem = makeBreakScheduleItem(loc, startHHMM, endHHMM);
+
           if (bItem) outSchedule.push(bItem);
           // Note: do not change lastTripEndStop; break doesn't move location
         } else if (col.kind === "school") {
@@ -2408,29 +2638,118 @@ self.onInit = function () {
       } else {
         // TRIP
         if (ctx.gtfs && c.routeId && c.dep && c.dest) {
-          const cand = findCandidateTripForRoute(
-            ctx.gtfs,
-            c.routeId,
-            c.dep,
-            c.dest,
-            ctx.roster,
-            last,
-          );
-          if (cand) {
-            c.tripId = cand.trip.trip_id;
-            c.via = cand.via || "";
-            c.depTime = cand.times.depTime || "";
-            c.arrTime = cand.times.arrTime || "";
-            const depEff = effDepHHMM(c);
-            const arrEff = effArrHHMM(c);
-            c.duration = depEff && arrEff ? durationHHMM(depEff, arrEff) : "";
-            const arrForChain = c.arrOverride
-              ? c.arrOverride + ":00"
-              : c.arrTime;
-            last = padToHHMMSS(arrForChain || last);
+          // --- Custom destination leg: dep is GTFS endpoint name, dest is custom:... ---
+          const customDest = resolveCustomStop(c.dest);
+          if (customDest) {
+            const startStop = resolveRouteStartStopForDep(c.routeId, c.dep);
+
+            // Default dep time from chain threshold if user hasn't edited it
+            const depHHMM = c.depOverride || hhmm(last);
+            c.depTime = padToHHMMSS(depHHMM);
+            c.tripId = ""; // not a GTFS trip
+            c.via = "";
+
+            // If we can’t resolve start coords yet, we can’t route
+            if (!startStop) {
+              c.arrTime = "";
+              c.duration = "";
+              c.customLeg = {
+                kind: "customTrip",
+                start: null,
+                end: customDest,
+              };
+              // last unchanged
+            } else {
+              // Mark as pending now, then compute async and re-chain when done
+              c.customLeg = {
+                kind: "customTrip",
+                start: startStop,
+                end: customDest,
+                pending: true,
+              };
+
+              const token = ++ctx.customStopTokenSeq;
+              ctx.customStopTokens.set(c.id, token);
+
+              (async () => {
+                try {
+                  // optional overlay (only if user just changed dest)
+                  // await showOverlay("Calculating route…");
+
+                  const res = await fetchRouteORS(
+                    { lat: startStop.lat, lon: startStop.lon },
+                    { lat: customDest.lat, lon: customDest.lon },
+                  );
+
+                  // stale request guard
+                  if (ctx.customStopTokens.get(c.id) !== token) return;
+
+                  const durMin = Math.max(0, Math.round(mins(res.duration_s)));
+                  const endHHMM = hhmm(
+                    addMinutesHHMMSS(padToHHMMSS(depHHMM), durMin),
+                  );
+
+                  c.arrTime = padToHHMMSS(endHHMM);
+                  c.duration = durationHHMM(depHHMM, endHHMM);
+                  c.customLeg = {
+                    kind: "customTrip",
+                    start: startStop,
+                    end: customDest,
+                    pending: false,
+                    duration_s: res.duration_s,
+                    distance_m: res.distance_m,
+                    coords: res.coords, // [lon,lat] list
+                  };
+
+                  // re-run chain from this index so later columns shift correctly
+                  const idx = cols.findIndex((x) => x.id === c.id);
+                  recomputeSequentialFrom(Math.max(0, idx));
+                } catch (e) {
+                  if (ctx.customStopTokens.get(c.id) !== token) return;
+                  c.arrTime = "";
+                  c.duration = "";
+                  c.customLeg = {
+                    kind: "customTrip",
+                    start: startStop,
+                    end: customDest,
+                    pending: false,
+                    error: String(e),
+                  };
+                  renderColumns();
+                  validateUI();
+                } finally {
+                  // setLoading(false);
+                }
+              })();
+
+              // While pending, don’t advance chain yet
+            }
           } else {
-            c.tripId = c.via = c.depTime = c.arrTime = c.duration = "";
-            // last unchanged; next items still try after the same threshold
+            // --- Normal GTFS trip behavior (unchanged) ---
+            const cand = findCandidateTripForRoute(
+              ctx.gtfs,
+              c.routeId,
+              c.dep,
+              c.dest,
+              ctx.roster,
+              last,
+            );
+
+            if (cand) {
+              c.tripId = cand.trip.trip_id;
+              c.via = cand.via || "";
+              c.depTime = cand.times.depTime || "";
+              c.arrTime = cand.times.arrTime || "";
+              const depEff = effDepHHMM(c);
+              const arrEff = effArrHHMM(c);
+              c.duration = depEff && arrEff ? durationHHMM(depEff, arrEff) : "";
+              const arrForChain = c.arrOverride
+                ? c.arrOverride + ":00"
+                : c.arrTime;
+              last = padToHHMMSS(arrForChain || last);
+            } else {
+              c.tripId = c.via = c.depTime = c.arrTime = c.duration = "";
+            }
           }
         } else {
           c.tripId = c.via = c.depTime = c.arrTime = c.duration = "";
@@ -2559,12 +2878,39 @@ self.onInit = function () {
   }
 
   // Make a Reposition schedule item to the selected stop
-  function makeRepositionScheduleItem(stopId, startHHMM, endHHMM) {
-    if (!stopId) return null;
-    const meta = STOPS_BY_ID.get(stopId) || {};
+  function makeRepositionScheduleItem(stopIdOrCustom, startHHMM, endHHMM) {
+    if (!stopIdOrCustom) return null;
+
+    // Custom stop
+    if (String(stopIdOrCustom).startsWith("custom:")) {
+      const id = String(stopIdOrCustom).slice("custom:".length);
+      const cs = ctx.customStopById.get(id);
+      if (!cs) return null;
+
+      const address = cs.name || "";
+      return {
+        runNo: "",
+        startTime: startHHMM,
+        endTime: endHHMM,
+        runName: "REP",
+        busStops: [
+          {
+            name: "Stop E",
+            time: endHHMM,
+            latitude: cs.lat,
+            longitude: cs.lon,
+            address,
+            abbreviation: address ? getAbbreviation(address) : "",
+          },
+        ],
+      };
+    }
+
+    // GTFS stop_id
+    const meta = STOPS_BY_ID.get(String(stopIdOrCustom)) || {};
     const address = meta.stop_name || "";
     return {
-      runNo: "", // numbered later
+      runNo: "",
       startTime: startHHMM,
       endTime: endHHMM,
       runName: "REP",
@@ -2889,5 +3235,156 @@ self.onInit = function () {
     const m = hhmmToMin(hhmm);
     const s = hhmmToMin(roster?.start);
     return (m - s + 1440) % 1440; // minutes since roster start
+  }
+
+  // ---------- Routing API (OpenRouteService) ----------
+  // ⚠️ Put your ORS key here (or read it from widget settings)
+  const ORS_API_KEY =
+    "5b3ce3597851110001cf624804ab2baa18644cc6b65c5829826b6117";
+
+  function routeCacheKey(aLon, aLat, bLon, bLat) {
+    return `${aLon},${aLat}|${bLon},${bLat}`;
+  }
+
+  async function fetchRouteORS(start, end) {
+    // start/end: {lat, lon}
+    const key = routeCacheKey(start.lon, start.lat, end.lon, end.lat);
+    if (ctx.routeApiCache.has(key)) return ctx.routeApiCache.get(key);
+
+    const url =
+      "https://api.openrouteservice.org/v2/directions/driving-car" +
+      `?api_key=${encodeURIComponent(ORS_API_KEY)}` +
+      `&start=${start.lon},${start.lat}` +
+      `&end=${end.lon},${end.lat}` +
+      "&format=geojson";
+
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error("ORS HTTP " + resp.status);
+    const data = await resp.json();
+
+    const feat = (data.features && data.features[0]) || null;
+    const coords = (feat && feat.geometry && feat.geometry.coordinates) || [];
+    const seg = feat?.properties?.segments?.[0] || {};
+    const duration_s = Number(seg.duration || 0);
+    const distance_m = Number(seg.distance || 0);
+
+    const out = {
+      coords: coords.map((c) => [Number(c[0]), Number(c[1])]), // [lon,lat]
+      duration_s,
+      distance_m,
+    };
+
+    ctx.routeApiCache.set(key, out);
+    return out;
+  }
+
+  function km(m) {
+    return Number.isFinite(m) ? m / 1000 : 0;
+  }
+  function mins(s) {
+    return Number.isFinite(s) ? s / 60 : 0;
+  }
+
+  function resolveRouteStartStopForDep(routeId, depName) {
+    const trips = (ctx.gtfs?.trips || []).filter(
+      (t) => String(t.route_id) === String(routeId),
+    );
+    const endpoints = ctx.tripEndpoints || new Map();
+    for (const tr of trips) {
+      const ep = endpoints.get(String(tr.trip_id));
+      if (!ep) continue;
+      if ((ep.startName || "") === (depName || "")) {
+        const s = STOPS_BY_ID.get(ep.startStopId);
+        if (s && s.stop_lat != null && s.stop_lon != null) {
+          return {
+            lat: +s.stop_lat,
+            lon: +s.stop_lon,
+            name: s.stop_name || depName,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  function resolveCustomStop(val) {
+    if (!val || typeof val !== "string") return null;
+    if (!val.startsWith("custom:")) return null;
+    const id = val.slice("custom:".length);
+    const cs = ctx.customStopById.get(id);
+    if (!cs) return null;
+    return { lat: cs.lat, lon: cs.lon, name: cs.name };
+  }
+
+  function buildFromCustomLeg(col, depHHMM, arrHHMM) {
+    const leg = col.customLeg;
+    if (!leg || !leg.coords || !leg.start || !leg.end)
+      return { busRouteData: [], scheduleData: [] };
+
+    // Ensure coords start/end explicitly
+    let coords = (leg.coords || []).slice();
+    if (coords.length) {
+      const first = coords[0];
+      const lastC = coords[coords.length - 1];
+      const s = [leg.start.lon, leg.start.lat];
+      const e = [leg.end.lon, leg.end.lat];
+      if (first[0] !== s[0] || first[1] !== s[1]) coords.unshift(s);
+      if (lastC[0] !== e[0] || lastC[1] !== e[1]) coords.push(e);
+    } else {
+      coords = [
+        [leg.start.lon, leg.start.lat],
+        [leg.end.lon, leg.end.lat],
+      ];
+    }
+
+    const busRouteData = [
+      {
+        starting_point: {
+          latitude: leg.start.lat,
+          longitude: leg.start.lon,
+          address: leg.start.name || "",
+        },
+        next_points: [
+          {
+            latitude: leg.end.lat,
+            longitude: leg.end.lon,
+            address: leg.end.name || "",
+            duration: `${Math.round(mins(leg.duration_s || 0))} minutes`,
+            route_coordinates: coords, // [lon,lat]
+          },
+        ],
+      },
+    ];
+
+    const scheduleData = [
+      {
+        runNo: "",
+        startTime: depHHMM || "",
+        endTime: arrHHMM || "",
+        runName: "Custom",
+        busStops: [
+          {
+            name: "Stop S",
+            time: depHHMM || "",
+            latitude: leg.start.lat,
+            longitude: leg.start.lon,
+            address: leg.start.name || "",
+            abbreviation: leg.start.name ? getAbbreviation(leg.start.name) : "",
+            time_point: 1,
+          },
+          {
+            name: "Stop E",
+            time: arrHHMM || "",
+            latitude: leg.end.lat,
+            longitude: leg.end.lon,
+            address: leg.end.name || "",
+            abbreviation: leg.end.name ? getAbbreviation(leg.end.name) : "",
+            time_point: 1,
+          },
+        ],
+      },
+    ];
+
+    return { busRouteData, scheduleData };
   }
 };

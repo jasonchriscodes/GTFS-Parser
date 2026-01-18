@@ -77,6 +77,39 @@
     <div id="routeFilterChips" class="chip-list" aria-live="polite"></div>
   </div>
 
+  <!-- Custom bus stops -->
+  <div
+    class="custom-stop-controls"
+    id="customStopControls"
+    aria-label="Custom bus stops"
+  >
+    <label>Custom bus stop:</label>
+
+    <input id="customStopName" type="text" placeholder="Name (e.g., Depot)" />
+    <input
+      id="customStopLat"
+      type="number"
+      step="0.000001"
+      placeholder="Lat (e.g., -36.78008)"
+    />
+    <input
+      id="customStopLon"
+      type="number"
+      step="0.000001"
+      placeholder="Lon (e.g., 174.99199)"
+    />
+
+    <button id="addCustomStopBtn" class="btn small" type="button">Add</button>
+
+    <div
+      id="customStopStatus"
+      class="zip-status info"
+      hiddenaria-live="polite"
+    ></div>
+
+    <div id="customStopChips" class="chip-list" aria-live="polite"></div>
+  </div>
+
   <!-- Trip planner -->
   <div class="planner" id="planner">
     <div class="planner-header">

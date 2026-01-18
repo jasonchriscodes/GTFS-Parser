@@ -415,3 +415,34 @@
 }
 .file-drop-zone.gtfs {}
 .file-drop-zone.school {}
+
+.custom-stop-controls{
+display:flex;
+align-items:center;
+gap:8px;
+flex-wrap:wrap;
+margin:6px010px;
+font-size:12px;
+color:#444;
+}
+
+.custom-stop-controlsinput{
+padding:4px6px;
+border:1px solid#ccc;
+border-radius:4px;
+}
+
+.custom-stop-controlsinput[type="number"]{
+width:140px;
+}
+
+.custom-stop-controlsinput[type="text"]{
+width:220px;
+}
+
+.custom-stop-controls.zip-status{
+margin-left:6px;
+}
+
+
+
