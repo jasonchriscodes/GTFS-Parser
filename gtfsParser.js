@@ -2551,22 +2551,38 @@ self.onInit = function () {
   function recomputeSequentialFrom(startIndex = 0) {
     const cols = ctx.planner.cols;
 
+    function chainEndHHMMSS(item) {
+      if (!item) return "";
+
+      if (item.kind === "trip") {
+        const t = item.arrOverride ? item.arrOverride + ":00" : item.arrTime; // GTFS or override
+        return t ? padToHHMMSS(t) : "";
+      }
+
+      if (item.kind === "break") {
+        return item.breakEnd ? padToHHMMSS(item.breakEnd) : "";
+      }
+
+      if (item.kind === "reposition") {
+        return item.repEnd ? padToHHMMSS(item.repEnd) : "";
+      }
+
+      if (item.kind === "school") {
+        const t = item.schoolEnd || item.schoolStart; // HH:MM
+        return t ? padToHHMMSS(t) : "";
+      }
+
+      return "";
+    }
+
     // Start threshold = roster start, or previous item end if starting mid-chain
     let last = padToHHMMSS(ctx.roster.start || "00:00");
+
     if (startIndex > 0) {
       for (let j = startIndex - 1; j >= 0; j--) {
-        const prev = cols[j];
-        if (prev.kind === "trip") {
-          const lastArr = prev.arrOverride
-            ? prev.arrOverride + ":00"
-            : prev.arrTime;
-          if (lastArr) {
-            last = padToHHMMSS(lastArr);
-            break;
-          }
-        }
-        if (prev.kind === "break" && prev.breakEnd) {
-          last = padToHHMMSS(prev.breakEnd);
+        const t = chainEndHHMMSS(cols[j]);
+        if (t) {
+          last = t;
           break;
         }
       }
