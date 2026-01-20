@@ -919,17 +919,23 @@ self.onInit = function () {
       const typeLabel = document.createElement("label");
       typeLabel.textContent = "Type";
       const typeSel = document.createElement("select");
-      ["trip", "break", "reposition", "school"].forEach((v) => {
-        const o = document.createElement("option");
-        o.value = v;
-        o.textContent =
-          v === "reposition"
-            ? "Reposition (REP)"
-            : v === "school"
-              ? "School run"
-              : v[0].toUpperCase() + v.slice(1);
-        typeSel.appendChild(o);
-      });
+      ["trip", "break", "signIn", "signOff", "reposition", "school"].forEach(
+        (v) => {
+          const o = document.createElement("option");
+          o.value = v;
+          o.textContent =
+            v === "reposition"
+              ? "Reposition (REP)"
+              : v === "signIn"
+                ? "Sign On"
+                : v === "signOff"
+                  ? "Sign Off"
+                  : v === "school"
+                    ? "School run"
+                    : v[0].toUpperCase() + v.slice(1);
+          typeSel.appendChild(o);
+        },
+      );
 
       typeSel.value = col.kind || "trip";
       typeSel.disabled = !ctx.rosterReady || !ctx.gtfs;
@@ -940,7 +946,11 @@ self.onInit = function () {
       typeSel.onchange = () => {
         col.kind = typeSel.value;
 
-        if (col.kind === "break") {
+        if (
+          col.kind === "break" ||
+          col.kind === "signIn" ||
+          col.kind === "signOff"
+        ) {
           col.routeId =
             col.dep =
             col.dest =
@@ -1357,10 +1367,20 @@ self.onInit = function () {
             "Select Route, Departure, Destination to manage timing points.";
           right.appendChild(hint);
         }
-      } else if (col.kind === "break") {
+      } else if (
+        col.kind === "break" ||
+        col.kind === "signIn" ||
+        col.kind === "signOff"
+      ) {
         // BREAK UI in left pane; right pane hidden
         const bDurLabel = document.createElement("label");
-        bDurLabel.textContent = "Break duration (minutes)";
+        const kindLabel =
+          col.kind === "signIn"
+            ? "Sign On"
+            : col.kind === "signOff"
+              ? "Sign off"
+              : "Break";
+        bDurLabel.textContent = `${kindLabel} duration (minutes)`;
         const bDur = document.createElement("input");
         bDur.type = "number";
         bDur.min = "1";
@@ -1373,7 +1393,7 @@ self.onInit = function () {
         };
 
         const bLocLabel = document.createElement("label");
-        bLocLabel.textContent = "Break location (optional)";
+        bLocLabel.textContent = `${kindLabel} location (optional)`;
         const bLocSel = document.createElement("select");
 
         // default = use last trip end stop
@@ -1911,7 +1931,11 @@ self.onInit = function () {
             if (bs.length) lastTripEndStop = bs[bs.length - 1];
           }
           // no busRouteData for reposition
-        } else if (col.kind === "break") {
+        } else if (
+          col.kind === "break" ||
+          col.kind === "signIn" ||
+          col.kind === "signOff"
+        ) {
           const startHHMM = hhmm(col.breakStart);
           const endHHMM = hhmm(col.breakEnd);
 
@@ -1942,9 +1966,16 @@ self.onInit = function () {
             }
           }
 
-          const bItem = makeBreakScheduleItem(loc, startHHMM, endHHMM);
+          const runName =
+            col.kind === "signIn"
+              ? "Sign On"
+              : col.kind === "signOff"
+                ? "Sign Off"
+                : "Break";
 
+          const bItem = makeBreakScheduleItem(loc, startHHMM, endHHMM, runName);
           if (bItem) outSchedule.push(bItem);
+
           // Note: do not change lastTripEndStop; break doesn't move location
         } else if (col.kind === "school") {
           const r = ctx.school.byId.get(col.schoolRouteId);
@@ -2559,7 +2590,11 @@ self.onInit = function () {
         return t ? padToHHMMSS(t) : "";
       }
 
-      if (item.kind === "break") {
+      if (
+        item.kind === "break" ||
+        item.kind === "signIn" ||
+        item.kind === "signOff"
+      ) {
         return item.breakEnd ? padToHHMMSS(item.breakEnd) : "";
       }
 
@@ -2591,7 +2626,7 @@ self.onInit = function () {
     for (let i = startIndex; i < cols.length; i++) {
       const c = cols[i];
 
-      if (c.kind === "break") {
+      if (c.kind === "break" || c.kind === "signIn" || c.kind === "signOff") {
         // compute break start/end from 'last' + duration
         const dur = Math.max(0, Number(c.breakMin) || 0);
         c.breakStart = last;
@@ -3003,24 +3038,23 @@ self.onInit = function () {
   });
 
   // ADD: helper to make a Break schedule item that reuses the last trip's end stop
-  function makeBreakScheduleItem(prevEndStop, startHHMM, endHHMM) {
-    if (!prevEndStop) return null; // can't place a break before any trip
+  function makeBreakScheduleItem(locStop, startHHMM, endHHMM, runName) {
+    if (!locStop) returnnull; // still requires a location
     return {
-      runNo: "", // set later when we re-number
+      runNo: "",
       startTime: startHHMM,
       endTime: endHHMM,
-      runName: "Break",
+      runName: runName || "Break",
       busStops: [
         {
-          // Show the last trip's end stop as the break location
           name: "Stop E",
-          time: endHHMM, // match your example: show the end-of-break time
-          latitude: prevEndStop.latitude ?? prevEndStop.lat ?? null,
-          longitude: prevEndStop.longitude ?? prevEndStop.lon ?? null,
-          address: prevEndStop.address || "",
+          time: endHHMM,
+          latitude: locStop.latitude ?? locStop.lat ?? null,
+          longitude: locStop.longitude ?? locStop.lon ?? null,
+          address: locStop.address || "",
           abbreviation:
-            prevEndStop.abbreviation ||
-            (prevEndStop.address ? getAbbreviation(prevEndStop.address) : ""),
+            locStop.abbreviation ||
+            (locStop.address ? getAbbreviation(locStop.address) : ""),
         },
       ],
     };
