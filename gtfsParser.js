@@ -2073,6 +2073,10 @@ self.onInit = function () {
           const bItem = makeBreakScheduleItem(loc, startHHMM, endHHMM, runName);
           if (bItem) outSchedule.push(bItem);
 
+          // NEW: also add busRouteData for Break / Sign On / Sign Off (stationary leg)
+          const stationary = makeStationaryBusRouteData(loc);
+          if (stationary) outBusRouteData.push(stationary);
+
           // IMPORTANT: update lastTripEndStop so REP after Sign On / Break has a FROM location
           if (bItem?.busStops?.length) {
             lastTripEndStop = bItem.busStops[bItem.busStops.length - 1];
@@ -3219,6 +3223,33 @@ self.onInit = function () {
     renderRouteFilter();
     renderColumns();
   });
+
+  // Build a "stationary" busRouteData leg at one location (start == end)
+  function makeStationaryBusRouteData(locStop) {
+    const lat = stopLat(locStop);
+    const lon = stopLon(locStop);
+    if (lat == null || lon == null) return null;
+
+    const addr = locStop?.address || "";
+    const c = [Number(lon), Number(lat)]; // [lon,lat]
+
+    return {
+      starting_point: {
+        latitude: Number(lat),
+        longitude: Number(lon),
+        address: addr,
+      },
+      next_points: [
+        {
+          latitude: Number(lat),
+          longitude: Number(lon),
+          address: addr,
+          duration: "0 minutes",
+          route_coordinates: [c, c], // duplicate point so polyline still works
+        },
+      ],
+    };
+  }
 
   // ADD: helper to make a Break schedule item that reuses the last trip's end stop
   function makeBreakScheduleItem(locStop, startHHMM, endHHMM, runName) {
