@@ -1916,21 +1916,107 @@ self.onInit = function () {
             if (bs.length) lastTripEndStop = bs[bs.length - 1];
           }
         } else if (col.kind === "reposition") {
-          // Build a REP item with only the END stop = selected stop
           const startHHMM = hhmm(col.repStart);
           const endHHMM = hhmm(col.repEnd);
+
+          // 1) Resolve destination stop for REP
+          const toStop = resolveStopAny(col.repStopId);
+
+          // 2) Create scheduleData for REP (same as before)
           const repItem = makeRepositionScheduleItem(
             col.repStopId,
             startHHMM,
             endHHMM,
           );
-          if (repItem) {
-            outSchedule.push(repItem);
-            // update "last location" to the reposition stop
-            const bs = repItem.busStops || [];
-            if (bs.length) lastTripEndStop = bs[bs.length - 1];
+          if (repItem) outSchedule.push(repItem);
+
+          // 3) Build busRouteData for REP using ORS:
+          //    FROM = previous Stop E location (lastTripEndStop)
+          //    TO   = REP stop (Stop E in REP)
+          const fromStop = lastTripEndStop;
+          const fromLat = stopLat(fromStop);
+          const fromLon = stopLon(fromStop);
+          const toLat = stopLat(toStop);
+          const toLon = stopLon(toStop);
+
+          if (
+            fromLat != null &&
+            fromLon != null &&
+            toLat != null &&
+            toLon != null
+          ) {
+            try {
+              const r = await fetchRouteORS(
+                { lat: fromLat, lon: fromLon },
+                { lat: toLat, lon: toLon },
+              );
+
+              // Ensure coords explicitly start/end at the chosen points
+              let coords = (r.coords || []).slice(); // [ [lon,lat], ... ]
+              const s = [Number(fromLon), Number(fromLat)];
+              const e = [Number(toLon), Number(toLat)];
+              if (!coords.length) coords = [s, e];
+              const first = coords[0];
+              const last = coords[coords.length - 1];
+              if (first[0] !== s[0] || first[1] !== s[1]) coords.unshift(s);
+              if (last[0] !== e[0] || last[1] !== e[1]) coords.push(e);
+
+              const durMin = Number(r.duration_s || 0) / 60;
+
+              outBusRouteData.push({
+                starting_point: {
+                  latitude: Number(fromLat),
+                  longitude: Number(fromLon),
+                  address: fromStop?.address || "",
+                },
+                next_points: [
+                  {
+                    latitude: Number(toLat),
+                    longitude: Number(toLon),
+                    address: toStop?.address || "",
+                    duration: `${durMin.toFixed(1)} minutes`,
+                    route_coordinates: coords,
+                  },
+                ],
+              });
+            } catch (e) {
+              // If ORS fails, still keep scheduleData; just omit route coords
+              console.warn("REP routing failed:", e);
+              outBusRouteData.push({
+                starting_point: {
+                  latitude: Number(fromLat),
+                  longitude: Number(fromLon),
+                  address: fromStop?.address || "",
+                },
+                next_points: [
+                  {
+                    latitude: Number(toLat),
+                    longitude: Number(toLon),
+                    address: toStop?.address || "",
+                    duration: "0.0 minutes",
+                    route_coordinates: [
+                      [Number(fromLon), Number(fromLat)],
+                      [Number(toLon), Number(toLat)],
+                    ],
+                  },
+                ],
+              });
+            }
           }
-          // no busRouteData for reposition
+
+          // 4) Update current location to REP destination (even if routing skipped)
+          if (toStop) {
+            lastTripEndStop = {
+              name: "Stop E",
+              time: endHHMM,
+              latitude: toLat,
+              longitude: toLon,
+              address: toStop.address,
+              abbreviation: toStop.abbreviation,
+            };
+          } else if (repItem?.busStops?.length) {
+            lastTripEndStop = repItem.busStops[repItem.busStops.length - 1];
+          }
         } else if (
           col.kind === "break" ||
           col.kind === "signIn" ||
@@ -1975,8 +2061,10 @@ self.onInit = function () {
 
           const bItem = makeBreakScheduleItem(loc, startHHMM, endHHMM, runName);
           if (bItem) outSchedule.push(bItem);
-
-          // Note: do not change lastTripEndStop; break doesn't move location
+          // ✅ IMPORTANT: update lastTripEndStop so REP after Sign On / Break has a FROM location
+          if (bItem?.busStops?.length) {
+            lastTripEndStop = bItem.busStops[bItem.busStops.length - 1];
+          }
         } else if (col.kind === "school") {
           const r = ctx.school.byId.get(col.schoolRouteId);
           const startHHMM = hhmm(col.schoolStart);
@@ -2978,6 +3066,43 @@ self.onInit = function () {
     };
   }
 
+  // --- NEW: Resolve either "custom:<id>" or a GTFS stop_id into a routing-ready stop ---
+  function resolveStopAny(stopIdOrCustom) {
+    if (!stopIdOrCustom) return null;
+
+    // Custom stop
+    if (String(stopIdOrCustom).startsWith("custom:")) {
+      const id = String(stopIdOrCustom).slice("custom:".length);
+      const cs = ctx.customStopById.get(id);
+      if (!cs) return null;
+      return {
+        latitude: cs.lat,
+        longitude: cs.lon,
+        address: cs.name || "",
+        abbreviation: cs.name ? getAbbreviation(cs.name) : "",
+      };
+    }
+
+    // GTFS stop_id
+    const s = STOPS_BY_ID.get(String(stopIdOrCustom));
+    if (!s) return null;
+    const address = s.stop_name || "";
+    return {
+      latitude: s.stop_lat != null ? +s.stop_lat : null,
+      longitude: s.stop_lon != null ? +s.stop_lon : null,
+      address,
+      abbreviation: address ? getAbbreviation(address) : "",
+    };
+  }
+
+  // --- NEW: normalize "stop" object (some places use lat/lon keys) ---
+  function stopLat(stop) {
+    return stop?.latitude ?? stop?.lat ?? null;
+  }
+  function stopLon(stop) {
+    return stop?.longitude ?? stop?.lon ?? null;
+  }
+
   function renderRouteFilter() {
     // Build dropdown options (exclude already-chosen)
     if (routeFilterSelect) {
@@ -3039,7 +3164,7 @@ self.onInit = function () {
 
   // ADD: helper to make a Break schedule item that reuses the last trip's end stop
   function makeBreakScheduleItem(locStop, startHHMM, endHHMM, runName) {
-    if (!locStop) returnnull; // still requires a location
+    if (!locStop) return null; // still requires a location
     return {
       runNo: "",
       startTime: startHHMM,
