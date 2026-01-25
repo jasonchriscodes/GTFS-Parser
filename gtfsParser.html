@@ -115,9 +115,25 @@
     <div class="planner-header">
       <h3>Trips</h3>
       <div class="planner-actions">
+        <button id="importBtn" class="btn small" type="button">Import</button>
+        <input
+          type="file"
+          id="importFileInput"
+          style="display: none"
+          accept=".json,application/json"
+          multiple
+        />
+        <span
+          id="importStatus"
+          class="zip-status info"
+          hidden
+          aria-live="polite"
+        ></span>
+
         <button id="addTripBtn" class="btn small" type="button">
           Add Trip
         </button>
+
         <span class="hint">
           Load a GTFS ZIP, then pick Departure & Destination. Arrival time shows
           next to Destination.

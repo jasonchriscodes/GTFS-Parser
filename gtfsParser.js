@@ -344,6 +344,9 @@ self.onInit = function () {
   const schoolDz = root.querySelector(".file-drop-zone.school");
   const gtfsStatus = document.getElementById("gtfsStatus");
   const schoolStatus = document.getElementById("schoolStatus");
+  const importBtn = document.getElementById("importBtn");
+  const importFileInput = document.getElementById("importFileInput");
+  const importStatus = document.getElementById("importStatus");
 
   // ---------- Custom stops (user-defined) ----------
   ctx.customStops = ctx.customStops || []; // [{id,name,lat,lon}]
@@ -564,6 +567,101 @@ self.onInit = function () {
     downloadJSONFromPre("scheduleJson", "scheduleData.json", downloadSchBtn);
   });
 
+  ctx.imported = ctx.imported || { busRouteData: null, scheduleData: null };
+
+  async function importFromFiles(files) {
+    if (!files || !files.length) return;
+
+    try {
+      await showOverlay("Importing JSON…");
+
+      let importedBus = null;
+      let importedSch = null;
+
+      for (const f of files) {
+        const txt = await readFileAsText(f);
+        let obj = null;
+        try {
+          obj = JSON.parse(txt);
+        } catch (e) {
+          console.warn("Invalid JSON:", f?.name, e);
+          continue;
+        }
+
+        // allow combined file: { busRouteData: [...], scheduleData: [...] }
+        if (!importedBus && looksLikeBusRouteData(obj))
+          importedBus = extractBusRouteData(obj);
+        if (!importedSch && looksLikeScheduleData(obj))
+          importedSch = extractScheduleData(obj);
+
+        // also allow file that is directly the array
+        if (
+          !importedBus &&
+          looksLikeBusRouteData(Array.isArray(obj) ? obj : null)
+        )
+          importedBus = obj;
+        if (
+          !importedSch &&
+          looksLikeScheduleData(Array.isArray(obj) ? obj : null)
+        )
+          importedSch = obj;
+      }
+
+      if (!importedBus && !importedSch) {
+        setImportStatus(
+          "err",
+          "No busRouteData/scheduleData found in selected files.",
+        );
+        return;
+      }
+
+      if (importedBus) {
+        ctx.imported.busRouteData = importedBus;
+        document.getElementById("busRouteJson").textContent = JSON.stringify(
+          importedBus,
+          null,
+          2,
+        );
+      }
+      if (importedSch) {
+        ctx.imported.scheduleData = importedSch;
+        document.getElementById("scheduleJson").textContent = JSON.stringify(
+          importedSch,
+          null,
+          2,
+        );
+
+        // rebuild the trip cards so you can keep editing
+        restorePlannerFromSchedule(importedSch);
+      }
+
+      // enable downloads if content exists
+      downloadBusBtn.disabled = !hasJsonText("busRouteJson");
+      downloadSchBtn.disabled = !hasJsonText("scheduleJson");
+
+      setImportStatus(
+        "ok",
+        `Imported: ${importedBus ? "busRouteData" : ""}${importedBus && importedSch ? " + " : ""}${importedSch ? "scheduleData" : ""}`,
+      );
+    } catch (e) {
+      console.error(e);
+      setImportStatus("err", "Import failed: " + (e?.message || e));
+    } finally {
+      setLoading(false);
+      if (importFileInput) importFileInput.value = ""; // reset so same file can be re-picked
+    }
+  }
+
+  importBtn?.addEventListener("click", () => {
+    if (overlay?.classList?.contains("show")) return;
+    importFileInput?.click();
+  });
+
+  importFileInput?.addEventListener("change", (e) => {
+    const files = e?.target?.files;
+    importFromFiles(files);
+  });
+
   // ---------- Trip Planner helpers ----------
   let tripColSeq = 0; // unique IDs for columns
 
@@ -682,6 +780,218 @@ self.onInit = function () {
     zipStatus.hidden = false;
     zipStatus.className = "zip-status " + state; // state: ok | err | info
     zipStatus.textContent = text || "";
+  }
+
+  function setImportStatus(state, text) {
+    if (!importStatus) return;
+    importStatus.hidden = false;
+    importStatus.className = "zip-status " + (state || "info"); // ok | err | info
+    importStatus.textContent = text || "";
+    if (state === "ok" || state === "info") {
+      setTimeout(() => {
+        if (importStatus) importStatus.hidden = true;
+      }, 2200);
+    }
+  }
+
+  async function readFileAsText(file) {
+    if (file && typeof file.text === "function") return await file.text();
+    return await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = (e) => resolve(e.target.result);
+      fr.onerror = reject;
+      fr.readAsText(file);
+    });
+  }
+
+  function looksLikeBusRouteData(x) {
+    const arr = Array.isArray(x) ? x : x?.busRouteData;
+    if (!Array.isArray(arr)) return false;
+    const first = arr[0];
+    return !!(
+      first &&
+      first.starting_point &&
+      Array.isArray(first.next_points)
+    );
+  }
+
+  function looksLikeScheduleData(x) {
+    const arr = Array.isArray(x) ? x : x?.scheduleData;
+    if (!Array.isArray(arr)) return false;
+    const first = arr[0];
+    return !!(
+      first &&
+      typeof first.runName !== "undefined" &&
+      Array.isArray(first.busStops)
+    );
+  }
+
+  function extractBusRouteData(x) {
+    if (Array.isArray(x)) return x;
+    if (Array.isArray(x?.busRouteData)) return x.busRouteData;
+    return null;
+  }
+
+  function extractScheduleData(x) {
+    if (Array.isArray(x)) return x;
+    if (Array.isArray(x?.scheduleData)) return x.scheduleData;
+    return null;
+  }
+
+  function parseMinutesFromHHMM(a, b) {
+    // forward minutes on 24h ring using your existing helper
+    if (!a || !b) return 0;
+    return forwardArcMinutes(a, b);
+  }
+
+  // Create/reuse a custom stop ID for an imported stop so planner dropdowns can select it.
+  function ensureCustomStopFromStopE(stopE) {
+    if (!stopE) return "";
+
+    const name = (stopE.address || "").trim();
+    const lat = Number(stopLat(stopE));
+    const lon = Number(stopLon(stopE));
+
+    if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) return "";
+
+    // try find existing by same name+coords (rough)
+    const existing = (ctx.customStops || []).find((cs) => {
+      return (
+        (cs.name || "").trim() === name &&
+        Math.abs(cs.lat - lat) < 1e-6 &&
+        Math.abs(cs.lon - lon) < 1e-6
+      );
+    });
+    if (existing) return "custom:" + existing.id;
+
+    const cs = { id: newCustomStopId(), name, lat, lon };
+    upsertCustomStop(cs);
+    return "custom:" + cs.id;
+  }
+
+  function isRunName(it, s) {
+    return (
+      String(it?.runName || "")
+        .trim()
+        .toLowerCase() === String(s).trim().toLowerCase()
+    );
+  }
+
+  function restorePlannerFromSchedule(scheduleArr) {
+    if (!Array.isArray(scheduleArr) || !scheduleArr.length) return;
+
+    // wipe and rebuild
+    ctx.tps = {};
+    tripColSeq = 0;
+
+    const cols = [];
+
+    scheduleArr.forEach((it) => {
+      const runName = String(it.runName || "");
+      const start = String(it.startTime || "").slice(0, 5);
+      const end = String(it.endTime || "").slice(0, 5);
+      const mins = parseMinutesFromHHMM(start, end);
+
+      const busStops = Array.isArray(it.busStops) ? it.busStops : [];
+      const first = busStops[0] || null;
+      const last = busStops[busStops.length - 1] || null;
+
+      // classify
+      let kind = "trip";
+      if (isRunName(it, "REP") || runName.toUpperCase().includes("REP"))
+        kind = "reposition";
+      else if (isRunName(it, "Break")) kind = "break";
+      else if (isRunName(it, "Sign On") || isRunName(it, "SignIn"))
+        kind = "signIn";
+      else if (isRunName(it, "Sign Off") || isRunName(it, "SignOff"))
+        kind = "signOff";
+      else if (runName.toLowerCase().startsWith("school")) kind = "school";
+
+      const col = {
+        id: ++tripColSeq,
+        kind,
+
+        // trip fields
+        routeId: "",
+        dep: "",
+        dest: "",
+        via: "",
+        depTime: "",
+        arrTime: "",
+        duration: "",
+        tripId: "",
+        depOverride: "",
+        arrOverride: "",
+
+        // break/sign fields
+        breakMin: 15,
+        breakStart: "",
+        breakEnd: "",
+        breakStopId: "",
+
+        // rep fields
+        repMin: 15,
+        repStopId: "",
+        repStart: "",
+        repEnd: "",
+
+        // school fields
+        schoolRouteId: "",
+        schoolStart: "",
+        schoolEnd: "",
+      };
+
+      if (kind === "trip") {
+        col.routeId = runName; // schedule runName stores route_id in your generator
+        col.dep = (first?.address || "").trim();
+        col.dest = (last?.address || "").trim();
+        col.depOverride = start || "";
+        col.arrOverride = end || "";
+      } else if (kind === "reposition") {
+        col.repMin = Math.max(1, mins || 15);
+        col.repStart = start ? start + ":00" : "";
+        col.repEnd = end ? end + ":00" : "";
+        // pick Stop E (destination) as a custom stop so it can be selected
+        const stopE =
+          busStops.find(
+            (s) => String(s.name || "").toLowerCase() === "stop e",
+          ) || last;
+        col.repStopId = ensureCustomStopFromStopE(stopE);
+      } else if (kind === "break" || kind === "signIn" || kind === "signOff") {
+        col.breakMin = Math.max(1, mins || 15);
+        col.breakStart = start ? start + ":00" : "";
+        col.breakEnd = end ? end + ":00" : "";
+        const stopE =
+          busStops.find(
+            (s) => String(s.name || "").toLowerCase() === "stop e",
+          ) || last;
+        col.breakStopId = ensureCustomStopFromStopE(stopE); // optional (can be "")
+      } else if (kind === "school") {
+        col.schoolStart = start || "";
+        col.schoolEnd = end || "";
+        // try match school route by dep/dest names if available; otherwise user can re-pick
+        const depName = (first?.address || "").trim();
+        const destName = (last?.address || "").trim();
+        const match = (ctx.school?.routes || []).find((r) => {
+          return (
+            String(r.depName || "").trim() === depName &&
+            String(r.destName || "").trim() === destName
+          );
+        });
+        col.schoolRouteId = match?.id || ctx.school?.routes?.[0]?.id || "";
+      }
+
+      cols.push(col);
+    });
+
+    ctx.planner.cols = cols.length ? cols : ctx.planner.cols;
+
+    // repaint custom stop chips (we may have added some)
+    renderCustomStopChips();
+
+    // show cards
+    renderColumns();
+    validateUI();
   }
 
   function setStatusHTML(el, state, html) {
